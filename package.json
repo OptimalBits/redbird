@@ -1,0 +1,33 @@
+{
+  "name": "redbird",
+  "version": "0.1.0",
+  "description": "A reverse proxy with support for dynamic tables based on etcd",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/OptimalBits/redbird.git"
+  },
+  "keywords": [
+    "proxy",
+    "reverse",
+    "etcd"
+  ],
+  "author": "Manuel Astudillo",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/OptimalBits/redbird/issues"
+  },
+  "homepage": "https://github.com/OptimalBits/redbird",
+  "dependencies": {
+    "bluebird": "^2.2.2",
+    "bunyan": "^1.0.0",
+    "hiredis": "^0.1.17",
+    "http-proxy": "^1.2.0",
+    "lodash": "^2.4.1",
+    "redis": "^0.12.1",
+    "valid-url": "^1.0.9"
+  }
+}
