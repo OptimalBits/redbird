@@ -1,4 +1,44 @@
 redbird
 =======
 
-A reverse proxy with support for dynamic proxy tables based on etcd
+A reverse proxy for nodejs with support for dynamic proxy tables based on redis or etcd.
+
+This light weight package includes everything you need for easy reverse routing of your applications.
+Great for routing many applications from different domains in one single host.
+
+Manuel routing example
+======================
+
+You can manually register or unregister routes dynamically.
+
+```
+var Redbird = require('redbird');
+
+var proxy = new Redbird({port: 80});
+
+// Route to any global ip
+proxy.register("optimalbits.com", "http://167.23.42.67:8000");
+
+// Route to any local ip, for example from docker containers.
+proxy.register("example.com", "http://172.17.42.1:8001");
+proxy.register("example.com/static", "http://172.17.42.1:8002");
+proxy.register("example.com/media", "http://172.17.42.1:8003");
+
+proxy.register("abc.example.com", "http://172.17.42.4:8080");
+proxy.register("abc.example.com/media", "http://172.17.42.5:8080");
+
+// Route to any href including path
+proxy.register("foobar.example.com", "http://172.17.42.4:8080/foobar");
+````
+
+Features
+========
+
+- Flexible and easy routing.
+- Websockets.
+- SSL Support.
+- Specify routes manually or automatically via redis or etcd backend.
+- Optional logging based on bunyan.
+
+
+
