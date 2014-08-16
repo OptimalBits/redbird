@@ -31,7 +31,7 @@ proxy.register("abc.example.com/media", "http://172.17.42.5:8080");
 proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 
 // Filter requests
-proxy.register("qux.example.com", "http://172.17.42.7:8080", {allow: ['180.4.7.*', '145.7.6.1']});
+proxy.register("qux.example.com", "http://172.17.42.7:8080", {allow: ['180.4.7.0/12', '145.7.6.1']});
 
 
 ````
@@ -43,7 +43,7 @@ Features
 - Websockets.
 - SSL Support.
 - Specify routes manually or automatically via redis or etcd backend.
-- Filter requests.
+- IP Filtering.
 - Optional logging based on bunyan.
 
 
