@@ -1,7 +1,7 @@
 redbird
 =======
 
-A reverse proxy for nodejs with support for dynamic proxy tables based on redis or etcd.
+A reverse proxy for nodejs with load balancer and support for dynamic proxy tables based on redis or etcd.
 
 This light weight package includes everything you need for easy reverse routing of your applications.
 Great for routing many applications from different domains in one single host.
@@ -40,6 +40,7 @@ Features
 ========
 
 - Flexible and easy routing.
+- Load balancer.
 - Websockets.
 - SSL Support.
 - Specify routes manually or automatically via redis or etcd backend.
