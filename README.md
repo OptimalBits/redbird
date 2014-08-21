@@ -6,6 +6,13 @@ A reverse proxy for nodejs with load balancer and support for dynamic proxy tabl
 This light weight package includes everything you need for easy reverse routing of your applications.
 Great for routing many applications from different domains in one single host.
 
+Why?
+====
+
+Because http-proxy is great byt using directly is cumbersome and error prone. With redbird you get a complete
+easy to use dynamic reverse proxy with the speed and robustness of http-proxy.
+
+
 Manual routing example
 ======================
 
@@ -44,8 +51,7 @@ Features
 - Websockets.
 - SSL Support.
 - Specify routes manually or automatically via redis or etcd backend.
-- IP Filtering.
+- Simple IP Filtering.
 - Optional logging based on bunyan.
-
 
 
