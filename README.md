@@ -50,7 +50,7 @@ proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 
 ##About HTTPS
 
-The HTTPS proxy supports virtual host by using SNI (which most modern browsers support: IE7 and above).
+The HTTPS proxy supports virtual hosts by using SNI (which most modern browsers support: IE7 and above).
 The proxying is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
 
 
