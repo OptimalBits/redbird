@@ -91,11 +91,11 @@ var redbird = new require('redbird')({
 
 // Since we will only have one https host, we dont need to specify additional certificates.
 redbird.register('localhost', 'http://localhost:8082', {ssl: true});
-``
+```
 
 3) Test it:
 
-Point your browser to localhost:8000 and you will see how it automatically redirects to your https server and proxies you to 
+Point your browser to ```localhost:8000``` and you will see how it automatically redirects to your https server and proxies you to 
 your target server.
 
 
