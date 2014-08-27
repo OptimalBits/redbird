@@ -3,7 +3,7 @@ Redbird Reverse Proxy
 
 ![redbird](http://logo32.com/wp-content/uploads/2012/09/red-bird-Vector.jpg)
 
-Handling dynamic virtual hosts, load balancing, proxing web sockets and SSL encryption should be
+Handling dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption should be
 easy and robust.
 
 With redbird you get a complete library to build dynamic reverse proxies with the speed and robustness of http-proxy.
@@ -52,7 +52,7 @@ About HTTPS
 ===========
 
 The HTTPS proxy supports virtual host by using SNI (which most modern browsers support: IE7 and above).
-The proxing is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
+The proxying is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
 
 
 HTTPS Example
@@ -76,6 +76,7 @@ Note: For production sites you need to buy valid SSL certificates from a trusted
 
 2) Create a simple redbird based proxy:
 
+```
 var redbird = new require('redbird')({
 	port: 8080,
 
@@ -90,6 +91,7 @@ var redbird = new require('redbird')({
 
 // Since we will only have one https host, we dont need to specify additional certificates.
 redbird.register('localhost', 'http://localhost:8082', {ssl: true});
+``
 
 3) Test it:
 
@@ -136,8 +138,7 @@ Roadmap
 - Automatic routing via Redis or Etcd backend.
 
 
-Reference
-=========
+##Reference
 
 <a name="redbird"/>
 ###Redbird(opts)
@@ -176,8 +177,8 @@ __Arguments__
     	Note that port is ignored, since the proxy just listens to one port.
 
     target {String|URL} A string or a url parsed by node url module.
-    @opts {Object} route options:
-    example:
+    opts {Object} route options:
+    examples:
     {ssl : true} // Will use default ssl certificates.
     {ssl: {
     	key: keyPath,
