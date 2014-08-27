@@ -13,15 +13,15 @@ Great for routing many applications from different domains in one single host, h
 
 Developed by [@manast](https:twitter.com/manast)
 
-Install
-=======
+##Install
+
 
 ```
 npm install redbird
 ```
 
-Example
-=======
+##Example
+
 
 You can programatically register or unregister routes dynamically even if the proxy is already running:
 
@@ -48,15 +48,13 @@ proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 ```
 
 
-About HTTPS
-===========
+##About HTTPS
 
 The HTTPS proxy supports virtual host by using SNI (which most modern browsers support: IE7 and above).
 The proxying is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
 
 
-HTTPS Example
-=============
+##HTTPS Example
 
 Conceptually HTTPS is easy, but it is also easy to struggle getting it right. With redbird its straightforward, check this complete example:
 
@@ -121,8 +119,7 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 ```
 
 
-Features
-========
+##Features
 
 - Flexible and easy routing.
 - Websockets.
@@ -131,8 +128,8 @@ Features
 - Register and unregister routes programatically.
 - Optional logging based on bunyan.
 
-Roadmap
-=======
+##Roadmap
+
 - Load balancer.
 - Simple IP Filtering.
 - Automatic routing via Redis or Etcd backend.
