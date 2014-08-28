@@ -11,7 +11,7 @@ With redbird you get a complete library to build dynamic reverse proxies with th
 This light-weight package includes everything you need for easy reverse routing of your applications.
 Great for routing many applications from different domains in one single host, handling SSL with ease, etc.
 
-Developed by [@manast](https:twitter.com/manast)
+Developed by [@manast](https:\\twitter.com/manast)
 
 ##Install
 
