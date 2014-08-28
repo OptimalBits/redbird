@@ -16,7 +16,7 @@ Developed by [@manast](https:twitter.com/manast)
 ##Install
 
 
-```
+```sh
 npm install redbird
 ```
 
@@ -25,7 +25,7 @@ npm install redbird
 
 You can programatically register or unregister routes dynamically even if the proxy is already running:
 
-```
+```js
 var proxy = require('redbird')({port: 80});
 
 // Route to any global ip
@@ -60,7 +60,7 @@ Conceptually HTTPS is easy, but it is also easy to struggle getting it right. Wi
 
 1) Generate a localhost development SSL certificate:
 
-```
+```sh
 /certs $ openssl genrsa -out dev-key.pem 1024
 /certs $ openssl req -new -key dev-key.pem -out dev-csr.pem
 
@@ -74,7 +74,7 @@ Note: For production sites you need to buy valid SSL certificates from a trusted
 
 2) Create a simple redbird based proxy:
 
-```
+```js
 var redbird = new require('redbird')({
 	port: 8080,
 
@@ -100,7 +100,7 @@ your target server.
 You can define many virtual hosts, each with its own SSL certificate. And if you do not define any, they will use the default one
 as in the example above:
 
-```
+```js
 redbird.register('example.com', 'http://172.60.80.2:8082', {
 	ssl: {
 		key: "../certs/example.key",
