@@ -178,6 +178,7 @@ __Arguments__
     examples:
     {ssl : true} // Will use default ssl certificates.
     {ssl: {
+        redirectPort: port, // optional https port number to be redirected if entering using http.
     	key: keyPath,
     	cert: certPath,
     	ca: caPath // optional
