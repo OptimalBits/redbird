@@ -13,6 +13,8 @@ Great for routing many applications from different domains in one single host, h
 
 Developed by [manast](http://twitter.com/manast)
 
+[![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
+
 ##Install
 
 
