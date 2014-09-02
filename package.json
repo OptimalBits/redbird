@@ -4,7 +4,7 @@
   "description": "A reverse proxy with support for dynamic tables based on etcd",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/* --reporter spec"
   },
   "repository": {
     "type": "git",
@@ -29,9 +29,7 @@
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
-    "chai": "^1.9.1"
-  },
-  "scripts": {
-    "test": "mocha test/* --reporter spec"
+    "chai": "^1.9.1",
+    "mocha": "^1.21.4"
   }
 }
