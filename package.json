@@ -27,5 +27,11 @@
     "http-proxy": "^1.2.0",
     "lodash": "^2.4.1",
     "valid-url": "^1.0.9"
+  },
+  "devDependencies": {
+    "chai": "^1.9.1"
+  },
+  "scripts": {
+    "test": "mocha test/* --reporter spec"
   }
 }
