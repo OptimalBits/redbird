@@ -166,7 +166,7 @@ __Arguments__
     		ca: caPath // Optional.
     	}
         bunyan: {Object} Bunyan options. Check [bunyan](https://github.com/trentm/node-bunyan) for info.
-        If you want yo disable bunyan, just set this option to ```false```. Keep in mind that
+        If you want to disable bunyan, just set this option to false. Keep in mind that
         having logs enabled incours in a performance penalty of about one order of magnitude per request.
 	}
 ```
