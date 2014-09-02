@@ -47,6 +47,13 @@ proxy.register("abc.example.com/media", "http://172.17.42.5:8080");
 // Route to any href including a target path
 proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 
+// You can also enable load balancing by registering the same hostname with different
+// target hosts. The requests will be evenly balanced using a Round Robin schema.
+proxy.register("balance.me", "http://172.17.40.6:8080");
+proxy.register("balance.me", "http://172.17.41.6:8080");
+proxy.register("balance.me", "http://172.17.42.6:8080");
+proxy.register("balance.me", "http://172.17.43.6:8080");
+
 ```
 
 
@@ -120,19 +127,18 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 
 ```
 
-
 ##Features
 
 - Flexible and easy routing.
 - Websockets.
 - Seamless SSL Support (HTTPS -> HTTP proxy)
 - Automatic HTTP to HTTPS redirects.
+- Load balancer.
 - Register and unregister routes programatically.
 - Optional logging based on bunyan.
 
 ##Roadmap
 
-- Load balancer.
 - Simple IP Filtering.
 - Automatic routing via Redis or Etcd backend.
 
@@ -158,6 +164,9 @@ __Arguments__
     		cert: certPath,
     		ca: caPath // Optional.
     	}
+        bunyan: {Object} Bunyan options. Check [bunyan](https://github.com/trentm/node-bunyan) for info.
+        If you want yo disable bunyan, just set this option to ```false```. Keep in mind that
+        having logs enabled incours in a performance penalty of about one order of magnitude per request.
 	}
 ```
 
@@ -191,7 +200,7 @@ __Arguments__
 ---------------------------------------
 
 <a name="unregister"/>
-#### Redbird##unregister(src)
+#### Redbird##unregister(src, [target])
 
  Unregisters a route. After calling this method, the given route will not
  be proxied anymore.
@@ -199,7 +208,9 @@ __Arguments__
 __Arguments__
 
 ```javascript
-    src {String} {String|URL} A string or a url parsed by node url module.
+    src {String|URL} A string or a url parsed by node url module.
+    target {String|URL} A string or a url parsed by node url module. If not 
+    specified, it will unregister all routes for the given source.
 ```
 
 ---------------------------------------
