@@ -49,7 +49,7 @@ proxy.register("abc.example.com/media", "http://172.17.42.5:8080");
 proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 
 // You can also enable load balancing by registering the same hostname with different
-// target hosts. The requests will be evenly balanced using a Round Robin schema.
+// target hosts. The requests will be evenly balanced using a Round Robin scheme.
 proxy.register("balance.me", "http://172.17.40.6:8080");
 proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
