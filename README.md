@@ -140,6 +140,7 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 
 ##Roadmap
 
+- Rate limiter.
 - Simple IP Filtering.
 - Automatic routing via Redis or Etcd backend.
 
