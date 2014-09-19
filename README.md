@@ -166,6 +166,7 @@ __Arguments__
     		key: keyPath,  
     		cert: certPath,
     		ca: caPath // Optional.
+            redirect: true, // Disable HTTPS autoredirect to this route.
     	}
         bunyan: {Object} Bunyan options. Check [bunyan](https://github.com/trentm/node-bunyan) for info.
         If you want to disable bunyan, just set this option to false. Keep in mind that
