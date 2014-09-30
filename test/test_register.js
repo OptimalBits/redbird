@@ -1,3 +1,5 @@
+"use strict";
+
 var Redbird = require('../');
 var expect = require('chai').expect;
 
