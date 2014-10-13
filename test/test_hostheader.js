@@ -20,7 +20,9 @@ describe("Target with a hostname", function(){
 
 		expect(redbird.routing).to.be.an("object");
 
-		redbird.register('127.0.0.1', '127.0.0.1.xip.io:'+TEST_PORT);
+		redbird.register('127.0.0.1', '127.0.0.1.xip.io:'+TEST_PORT, {
+			useTargetHostHeader: true
+		});
 
 		expect(redbird.routing).to.have.property("127.0.0.1");
 
@@ -40,9 +42,7 @@ describe("Target with a hostname", function(){
 
 		expect(redbird.routing).to.be.an("object");
 
-		redbird.register('127.0.0.1', '127.0.0.1.xip.io:'+TEST_PORT, {
-			useSourceHostHeader: true
-		});
+		redbird.register('127.0.0.1', '127.0.0.1.xip.io:'+TEST_PORT);
 
 		expect(redbird.routing).to.have.property("127.0.0.1");
 
