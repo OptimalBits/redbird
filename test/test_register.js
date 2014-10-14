@@ -126,6 +126,32 @@ describe("Route registration", function(){
 
 		redbird.close();
 	})
+	it("should register a custom route", function(){
+		var redbird = Redbird(opts);
+
+		expect(redbird.routing).to.be.an("object");
+
+		var testFunc = function(req, res, proxy) {
+			proxy.web(req, res, {target: 'http://192.168.1.2:8080/'});
+		};
+		redbird.register('example.com', testFunc);
+
+		expect(redbird.routing).to.have.property("example.com")
+
+		var host = redbird.routing["example.com"];
+		expect(host).to.be.an("array");
+		expect(host[0]).to.have.property('path')
+		expect(host[0].path).to.be.eql('/');
+		expect(host[0].urls).to.be.an('array');
+		expect(host[0].urls.length).to.be.eql(1);
+		expect(host[0].urls[0].href).to.be.an('undefined');
+		expect(host[0].urls[0]).to.be.eql(testFunc);
+
+		redbird.unregister('example.com', testFunc);
+		expect(redbird.resolve('example.com')).to.be.an("undefined")
+
+		redbird.close();
+	})
 })
 
 describe("Route resolution", function(){
@@ -226,6 +252,23 @@ describe("Route resolution", function(){
 		var target = redbird._getTarget('example.com', req);
 		expect(target.href).to.be.eql('http://192.168.1.3:8080/a/b')
 		expect(req.url).to.be.eql('/a/b/baz/a/b/c')
+
+		redbird.close();
+	})
+	
+	it("should resolve a custom route", function(){
+		var redbird = Redbird(opts);
+
+		expect(redbird.routing).to.be.an("object");
+
+		var testFunc = function(req, res, proxy) {
+			proxy.web(req, res, {target: 'http://192.168.1.2:8080/'});
+		};
+		redbird.register('example.com', testFunc);
+
+		var req = {url: '/foo/baz/a/b/c'}
+		var target = redbird._getTarget('example.com', req);
+		expect(target).to.be.eql(testFunc);
 
 		redbird.close();
 	})

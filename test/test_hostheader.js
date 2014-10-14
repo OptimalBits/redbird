@@ -34,6 +34,30 @@ describe("Target with a hostname", function(){
     });
     
 	})
+	
+	it("should resolve a custom route", function(done){
+		var redbird = Redbird(opts);
+
+		expect(redbird.routing).to.be.an("object");
+
+		var testFunc = function(req, res, proxy) {
+			proxy.web(req, res, {target: 'http://127.0.0.1:'+TEST_PORT});
+		};
+		redbird.register('127.0.0.1', testFunc);
+
+		expect(redbird.routing).to.have.property("127.0.0.1");
+
+		var passed = false;
+    testServer().then(function(req){
+      passed = true;
+    });
+
+    http.get('http://127.0.0.1:'+PROXY_PORT, function(res) {
+      redbird.close();
+      expect(passed).to.be.eql(true);
+      done();
+    });
+	})
 })
 
 
