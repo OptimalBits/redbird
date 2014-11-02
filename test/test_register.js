@@ -126,6 +126,15 @@ describe("Route registration", function(){
 
 		redbird.close();
 	})
+	it("shouldnt crash process in unregister of unregisted host", function(done){
+		var redbird = Redbird(opts);
+
+		redbird.unregister('example.com');
+
+		done()
+
+		redbird.close();
+	})
 })
 
 describe("Route resolution", function(){
