@@ -1,6 +1,6 @@
 {
   "name": "redbird",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A reverse proxy with support for dynamic tables based on etcd",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "bluebird": "^2.2.2",
     "bunyan": "^1.0.0",
-    "dolphin": "0.0.3",
+    "dolphin": "^0.0.4",
     "http-proxy": "1.6.1",
     "lodash": "^2.4.1",
     "valid-url": "^1.0.9"
