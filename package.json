@@ -25,7 +25,7 @@
     "bluebird": "^2.2.2",
     "bunyan": "^1.0.0",
     "dolphin": "^0.0.7",
-    "http-proxy": "1.6.1",
+    "http-proxy": "1.11.1",
     "lodash": "^2.4.1",
     "valid-url": "^1.0.9"
   },
