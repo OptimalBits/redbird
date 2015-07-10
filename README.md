@@ -125,7 +125,34 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 		cert: "../certs/foobar.crt",	
 	}
 });
+```
 
+##Docker support
+If you use docker, you can tell Redbird to automatically register routes based on image
+names. You register your image name and then everytime a container starts from that image,
+it gets registered, and unregistered if the container is stopped. If you run more than one
+container from the same image, redbird will load balance following a round robin schema:
+
+```js
+var redbird = require('redbird')({
+  port: 8080,
+});
+
+require('redbird')
+  .docker(redbird)
+  .register("example.com", 'company/myimage:latest');
+```
+
+##Cluster support
+Redbird support automatic support for node cluster. Just specify in the options object
+the number of threads that you want redbird to use. Redbird will automatically re-start
+any thread thay may crash automatically, increasing even more its reliability.
+
+```js
+var redbird = new require('redbird')({
+	port: 8080,
+  cluster: 4
+});
 ```
 
 ##Features
@@ -136,6 +163,8 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 - Automatic HTTP to HTTPS redirects.
 - Load balancer.
 - Register and unregister routes programatically.
+- Docker support for automatic registration of running containers
+- Cluster support that enables automatic multithreading.
 - Optional logging based on bunyan.
 
 ##Roadmap
