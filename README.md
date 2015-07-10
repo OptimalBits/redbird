@@ -1,7 +1,7 @@
 Redbird Reverse Proxy
 =====================
 
-![redbird](http://logo32.com/wp-content/uploads/2012/09/red-bird-Vector.jpg)
+![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
 
 Handling dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption should be
 easy and robust.
