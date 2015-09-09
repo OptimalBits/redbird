@@ -31,6 +31,9 @@ You can programatically register or unregister routes dynamically even if the pr
 ```js
 var proxy = require('redbird')({port: 80});
 
+// OPTIONAL: Setup your proxy but disable the X-Forwarded-For header
+var proxy = require('redbird')({port: 80, xfwd: false});
+
 // Route to any global ip
 proxy.register("optimalbits.com", "http://167.23.42.67:8000");
 
@@ -54,6 +57,8 @@ proxy.register("balance.me", "http://172.17.40.6:8080");
 proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
+
+
 
 ```
 
