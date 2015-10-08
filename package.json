@@ -1,7 +1,7 @@
 {
   "name": "redbird",
-  "version": "0.4.8",
-  "description": "A reverse proxy with support for dynamic tables based on etcd",
+  "version": "0.4.9",
+  "description": "A reverse proxy with support for dynamic tables",
   "main": "index.js",
   "scripts": {
     "test": "mocha test/* --reporter spec"
