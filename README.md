@@ -1,4 +1,4 @@
-Redbird Reverse Proxy
+Redbird Reverse Proxy *now with HTTPS targets!*
 =====================
 
 ![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
@@ -15,6 +15,8 @@ Developed by [manast](http://twitter.com/manast)
 
 [![BuildStatus](https://secure.travis-ci.org/OptimalBits/redbird.png?branch=master)](http://travis-ci.org/OptimalBits/redbird)
 [![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
+
+This a minor fork of the main redbird source to allow https targets and an option to specify whether the connection to the target should be secure or not.
 
 ##Install
 
@@ -130,6 +132,27 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 		cert: "../certs/foobar.crt",	
 	}
 });
+```
+
+*New!* Now you can specify https hosts as targets and also specify if you want the connection to the target host to be secure (default is true).
+
+```js
+var redbird = require('redbird')({
+	port: 80,
+        secure: false,
+        ssl: {
+                port: 443,
+                key: "../certs/default.key",
+                cert: "../certs/default.crt",
+        }
+});
+redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
+	ssl: {
+		key: "../certs/tutorial.key",
+		cert: "../certs/tutorial.crt",
+	}
+});
+
 ```
 
 ##Docker support
