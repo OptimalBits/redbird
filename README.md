@@ -139,12 +139,12 @@ redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 ```js
 var redbird = require('redbird')({
 	port: 80,
-        secure: false,
-        ssl: {
-                port: 443,
-                key: "../certs/default.key",
-                cert: "../certs/default.crt",
-        }
+	secure: false,
+	ssl: {
+		port: 443,
+		key: "../certs/default.key",
+		cert: "../certs/default.crt",
+	}
 });
 redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 	ssl: {
