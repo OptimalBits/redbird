@@ -184,7 +184,7 @@ require('redbird')
 
 ##Cluster support
 Redbird support automatic support for node cluster. Just specify in the options object
-the number of threads that you want redbird to use. Redbird will automatically re-start
+the number of processes that you want redbird to use. Redbird will automatically re-start
 any thread thay may crash automatically, increasing even more its reliability.
 
 ```js
