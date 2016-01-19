@@ -1,5 +1,5 @@
-Redbird Reverse Proxy
-=====================
+Redbird Reverse Proxy with built in Cluster and Docker support.
+===============================================================
 
 ![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
 
