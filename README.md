@@ -17,6 +17,18 @@ Developed by [manast](http://twitter.com/manast)
 [![BuildStatus](https://secure.travis-ci.org/OptimalBits/redbird.png?branch=master)](http://travis-ci.org/OptimalBits/redbird)
 [![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
 
+##Features
+
+- Flexible and easy routing.
+- Websockets.
+- Seamless SSL Support (HTTPS -> HTTP proxy)
+- Automatic HTTP to HTTPS redirects.
+- Load balancer.
+- Register and unregister routes programatically.
+- Docker support for automatic registration of running containers
+- Cluster support that enables automatic multi-process.
+- Optional logging based on bunyan.
+
 ##Install
 
 
@@ -181,18 +193,6 @@ var redbird = new require('redbird')({
   cluster: 4
 });
 ```
-
-##Features
-
-- Flexible and easy routing.
-- Websockets.
-- Seamless SSL Support (HTTPS -> HTTP proxy)
-- Automatic HTTP to HTTPS redirects.
-- Load balancer.
-- Register and unregister routes programatically.
-- Docker support for automatic registration of running containers
-- Cluster support that enables automatic multithreading.
-- Optional logging based on bunyan.
 
 ##Roadmap
 
