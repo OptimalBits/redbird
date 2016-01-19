@@ -27,6 +27,7 @@ Developed by [manast](http://twitter.com/manast)
 - Register and unregister routes programatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
 - Cluster support that enables automatic multi-process.
+- Based on to p rock-solid node-http-proxy and battle tested on production in many sites.
 - Optional logging based on bunyan.
 
 ##Install
