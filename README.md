@@ -15,7 +15,6 @@ Developed by [manast](http://twitter.com/manast)
 
 [![BuildStatus](https://secure.travis-ci.org/OptimalBits/redbird.png?branch=master)](http://travis-ci.org/OptimalBits/redbird)
 [![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
-[![redbird](https://ghit.me/badge.svg?repo=joelself/redbird)](https://ghit.me/repo/joelself/redbird)
 
 ##Install
 
