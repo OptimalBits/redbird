@@ -24,7 +24,7 @@ Developed by [manast](http://twitter.com/manast)
 - Seamless SSL Support (HTTPS -> HTTP proxy)
 - Automatic HTTP to HTTPS redirects.
 - Load balancer.
-- Register and unregister routes programatically.
+- Register and unregister routes programatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
 - Cluster support that enables automatic multi-process.
 - Optional logging based on bunyan.
