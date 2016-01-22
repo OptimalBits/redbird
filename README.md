@@ -195,6 +195,18 @@ var redbird = new require('redbird')({
 });
 ```
 
+##NTLM support
+If you need NTLM support, you can tell Redbird to add the required header handler. This 
+registers a response handler which makes sure the NTLM auth header is properly split into
+two entries from http-proxy.
+
+```js
+var redbird = new require('redbird')({
+  port: 8080,
+  ntlm: true
+});
+```
+
 ##Roadmap
 
 - Statistics (number of connections, load, response times, etc)
