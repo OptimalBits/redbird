@@ -16,7 +16,7 @@
     "docker"
   ],
   "author": "Manuel Astudillo",
-  "license": "BSD",
+  "license": "BSD with attribution",
   "bugs": {
     "url": "https://github.com/OptimalBits/redbird/issues"
   },
