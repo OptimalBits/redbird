@@ -101,7 +101,7 @@ describe("Route registration", function(){
 		redbird.register('example.com/qux/baz', '192.168.1.5:8080');
 		redbird.register('example.com/foo', '192.168.1.3:8080');
 		redbird.register('example.com/bar', '192.168.1.4:8080');
-		
+
 		expect(redbird.routing).to.have.property("example.com")
 
 		var host = redbird.routing["example.com"];
@@ -166,7 +166,7 @@ describe("Route resolution", function(){
 		redbird.register('example.com/qux/baz', '192.168.1.5:8080');
 		redbird.register('example.com/foo', '192.168.1.3:8080');
 		redbird.register('example.com/bar', '192.168.1.4:8080');
-	    redbird.register('example.com/foo/baz', '192.168.1.7:8080');
+	  redbird.register('example.com/foo/baz', '192.168.1.7:8080');
 
 		var route = redbird.resolve('example.com', '/foo/baz/a/b/c');
 
@@ -206,10 +206,20 @@ describe("Route resolution", function(){
 		redbird.register('example.com/qux/baz', '192.168.1.5:8080');
 		redbird.register('example.com/foo', '192.168.1.3:8080');
 		redbird.register('foobar.com/bar', '192.168.1.4:8080');
-	    redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
+	  redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
+    redbird.register('foobar.com/media', '192.168.1.7:8080');
 
-	    var route = redbird.resolve('example.com', '/qux/a/b/c');
-	    expect(route.path).to.be.eql('/');
+	  var route = redbird.resolve('example.com', '/qux/a/b/c');
+	  expect(route.path).to.be.eql('/');
+
+    var route = redbird.resolve('foobar.com', '/medias/');
+	  expect(route).to.be.undefined;
+
+    var route = redbird.resolve('foobar.com', '/mediasa');
+	  expect(route).to.be.undefined;
+
+    var route = redbird.resolve('foobar.com', '/media/sa');
+	  expect(route.path).to.be.eql('/media');
 
 		var target = redbird._getTarget('example.com', {url: '/foo/baz/a/b/c'});
 		expect(target.href).to.be.eql('http://192.168.1.3:8080/')
@@ -226,12 +236,12 @@ describe("Route resolution", function(){
 		redbird.register('example.com/qux/baz', '192.168.1.5:8080');
 		redbird.register('example.com/foo', '192.168.1.3:8080/a/b');
 		redbird.register('foobar.com/bar', '192.168.1.4:8080');
-	    redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
+	  redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
 
-	    var route = redbird.resolve('example.com', '/qux/a/b/c');
-	    expect(route.path).to.be.eql('/');
+	  var route = redbird.resolve('example.com', '/qux/a/b/c');
+	  expect(route.path).to.be.eql('/');
 
-	    var req = {url: '/foo/baz/a/b/c'}
+	  var req = {url: '/foo/baz/a/b/c'}
 		var target = redbird._getTarget('example.com', req);
 		expect(target.href).to.be.eql('http://192.168.1.3:8080/a/b')
 		expect(req.url).to.be.eql('/a/b/baz/a/b/c')
@@ -261,21 +271,21 @@ describe("Load balancing", function(){
 	    	var target = redbird._getTarget('example.com', {url: '/a/b/c'});
 			expect(target.href).to.be.eql('http://192.168.1.1:8080/')
 			expect(redbird.routing['example.com'][0].rr).to.be.eql(1);
-			
+
 			var target = redbird._getTarget('example.com', {url: '/x/y'});
 			expect(target.href).to.be.eql('http://192.168.1.2:8080/')
 			expect(redbird.routing['example.com'][0].rr).to.be.eql(2);
-			
+
 			var target = redbird._getTarget('example.com', {url: '/j'});
 			expect(target.href).to.be.eql('http://192.168.1.3:8080/')
 			expect(redbird.routing['example.com'][0].rr).to.be.eql(3);
-			
+
 			var target = redbird._getTarget('example.com', {url: '/k/'});
 			expect(target.href).to.be.eql('http://192.168.1.4:8080/')
 			expect(redbird.routing['example.com'][0].rr).to.be.eql(0);
 	    }
 
-		redbird.close();	
+		redbird.close();
 	});
 });
 
