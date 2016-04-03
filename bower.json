@@ -1,0 +1,36 @@
+{
+  "name": "redbird",
+  "version": "0.4.15",
+  "description": "A reverse proxy with support for dynamic tables",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/OptimalBits/redbird.git"
+  },
+  "keywords": [
+    "proxy",
+    "reverse",
+    "docker"
+  ],
+  "authors": [
+      "Manuel Astudillo"
+  ],
+  "license": "BSD with attribution",
+  "homepage": "https://github.com/OptimalBits/redbird",
+  "moduleType": [],
+  "dependencies": {
+    "bluebird": "^2.2.2",
+    "bunyan": "git://github.com/trentm/node-bunyan#^1.0.0",
+    "dolphin": "git://github.com/OptimalBits/dolphin.git#latest",
+    "http-proxy": "git://github.com/nodejitsu/node-http-proxy.git#^1.12.1",
+    "lodash": "^2.4.1",
+    "valid-url": "git://github.com/ogt/valid-url.git#^1.0.9"
+  },
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "gulp": "^3.8.11",
+    "gulp-bower": "git://github.com/zont/gulp-bower/#7d9cb75784c73a21fe2209bb1792cc902856fcf5",
+    "gulp-eslint": "git://github.com/adametry/gulp-eslint.git#^0.9.0",
+    "mocha": "^1.21.4"
+  }
+}
