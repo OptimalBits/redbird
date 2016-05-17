@@ -207,6 +207,79 @@ var redbird = new require('redbird')({
 });
 ```
 
+
+##Custom Resolvers
+
+With custom resolvers, you can decide how the proxy server handles request. Custom resolvers allow you to extend redbird considerably. With custom resolvers, you can perform the following:
+
+- Do path-based routing
+- Do wildcard domain routing.
+- Use variable upstream servers based on availability, for example in conjunction with Etcd or any other service discovery platform.
+- And more.
+
+Resolvers should be:
+
+  1. Be invokable function. The `this` context of such function is the Redbird Proxy object. The resolver function takes in two parameters : `host` and `url`
+  2. Have a priority, resolvers with higher priorities are called before those of lower priorities. The default resolver, has a priority of 0.
+  3. A resolver should return a route object or a string when matches it matches the parameters passed in. If string is returned, then it must be a valid upstream URL, if object, then the object must conform to the following:
+
+```
+  {
+     url: string or array of string [required],
+     path: path prefix for route, [optional], defaults to '/',
+     opts: {} //redbird target options, see Redbird.register() [optional],
+  }
+```
+
+### Defining Resolvers
+
+Resolvers can be defined when initializing the proxy object with the `resolvers` parameter. An example is below:
+
+```javascript
+ //for every URL path that starts with /api/, send request to upstream API service
+ var customResolver1 = function(host, url) {
+   if(/^\/api\//.test(url)){
+      return 'http://127.0.0.1:8888';
+   }
+ };
+
+ //assign high priority
+ customResolver1.priority = 100;
+
+ var proxy = new require('redbird')({
+    port: 8080,
+    resolvers: [
+    customResolver1,
+    //uses the same priority as default resolver, so will be called after default resolver
+    function(host, url) {
+      if(/\.example\.com/.test(host)){
+        return 'http://127.0.0.1:9999'
+      }
+    }]
+ })
+
+```
+
+### Adding and Removing Resolvers at Runtime.
+
+You can add or remove resolvers at runtime, this is useful in situations where your upstream is tied to a service discovery service system.
+
+```javascript
+var topPriority = function(host, url) {
+  return /app\.example\.com/.test(host) ? 'http://127.0.0.1:8000' : null;
+};
+
+topPriority.priority = 200;
+proxy.addResolver(topPriority);
+
+
+//remove top priority after 10 minutes,
+setTimeout(function() {
+  proxy.removeResolver(topPriority);
+}, 600000);
+```
+
+
 ##Roadmap
 
 - Statistics (number of connections, load, response times, etc)
@@ -226,7 +299,7 @@ the given port.
 
 __Arguments__
 
-```javascript
+```
     opts {Object} Options to pass to the proxy:
     {
     	port: {Number} // port number that the proxy will listen to.
@@ -241,6 +314,7 @@ __Arguments__
         bunyan: {Object} Bunyan options. Check [bunyan](https://github.com/trentm/node-bunyan) for info.
         If you want to disable bunyan, just set this option to false. Keep in mind that
         having logs enabled incours in a performance penalty of about one order of magnitude per request.
+        resolvers: {Function | Array}  a list of custom resolvers. Can be a single function or an array of functions. See more details about resolvers above.
 	}
 ```
 
