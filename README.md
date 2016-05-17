@@ -225,7 +225,7 @@ Resolvers should be:
 
 ```
   {
-     url: string or array of string [required],
+     url: string or array of string [required], when array, the urls will be load-balanced across.
      path: path prefix for route, [optional], defaults to '/',
      opts: {} //redbird target options, see Redbird.register() [optional],
   }
@@ -266,7 +266,13 @@ You can add or remove resolvers at runtime, this is useful in situations where y
 
 ```javascript
 var topPriority = function(host, url) {
-  return /app\.example\.com/.test(host) ? 'http://127.0.0.1:8000' : null;
+  return /app\.example\.com/.test(host) ? {
+    //load balanced
+    url: [
+    'http://127.0.0.1:8000',
+    'http://128.0.1.1:9999'
+   ]
+  } : null;
 };
 
 topPriority.priority = 200;
