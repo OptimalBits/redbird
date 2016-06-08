@@ -13,10 +13,11 @@
   "keywords": [
     "proxy",
     "reverse",
-    "docker"
+    "docker",
+    "etcd"
   ],
   "author": "Manuel Astudillo",
-  "license": "BSD with attribution",
+  "license": "BSD-3-Clause-Attribution",
   "bugs": {
     "url": "https://github.com/OptimalBits/redbird/issues"
   },
@@ -27,6 +28,7 @@
     "dolphin": "^0.0.7",
     "http-proxy": "1.12.1",
     "lodash": "^2.4.1",
+    "node-etcd": "^4.2.1",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
