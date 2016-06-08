@@ -72,8 +72,6 @@ proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
 
-
-
 ```
 
 
@@ -107,7 +105,7 @@ Note: For production sites you need to buy valid SSL certificates from a trusted
 var redbird = new require('redbird')({
 	port: 8080,
 
-	// Specify filenames to default SSL certificates (in case SNI is not supported by the 
+	// Specify filenames to default SSL certificates (in case SNI is not supported by the
 	// user's browser)
 	ssl: {
 		port: 8443,
@@ -122,7 +120,7 @@ redbird.register('localhost', 'http://localhost:8082', {ssl: true});
 
 3) Test it:
 
-Point your browser to ```localhost:8000``` and you will see how it automatically redirects to your https server and proxies you to 
+Point your browser to ```localhost:8000``` and you will see how it automatically redirects to your https server and proxies you to
 your target server.
 
 
@@ -133,7 +131,7 @@ as in the example above:
 redbird.register('example.com', 'http://172.60.80.2:8082', {
 	ssl: {
 		key: "../certs/example.key",
-		cert: "../certs/example.crt",	
+		cert: "../certs/example.crt",
 		ca: "../certs/example.ca"
 	}
 });
@@ -141,7 +139,7 @@ redbird.register('example.com', 'http://172.60.80.2:8082', {
 redbird.register('foobar.com', 'http://172.60.80.3:8082', {
 	ssl: {
 		key: "../certs/foobar.key",
-		cert: "../certs/foobar.crt",	
+		cert: "../certs/foobar.crt",
 	}
 });
 ```
@@ -196,7 +194,7 @@ var redbird = new require('redbird')({
 ```
 
 ##NTLM support
-If you need NTLM support, you can tell Redbird to add the required header handler. This 
+If you need NTLM support, you can tell Redbird to add the required header handler. This
 registers a response handler which makes sure the NTLM auth header is properly split into
 two entries from http-proxy.
 
@@ -207,14 +205,36 @@ var redbird = new require('redbird')({
 });
 ```
 
+##etcd backend
+RedBird can use [node-etcd](https://github.com/stianeikeland/node-etcd) to automatically create proxy records from an etcd cluster. Configuration
+is accomplished by passing an array of [options](https://github.com/stianeikeland/node-etcd#constructor-options), plus the hosts and path variables,
+which define which etcd cluster hosts, and which directory within those hosts, that redbird should poll for updates.
+
+```js
+var redbird = require('redbird')({
+  port:8080
+});
+
+var options = {
+  hosts: ['localhost:2379'], // REQUIRED - you must define array of cluster hosts
+	path: ['redbird'], // OPTIONAL - path to etcd keys
+	... // OPTIONAL - pass in node-etcd connection options
+}
+require('redbird').etcd(redbird,options);
+```
+etcd records can be created in one of two ways, either as a target destination pair:
+```/redbird/example.com			"8.8.8.8"
+or by passing a JSON object containing multiple hosts, and redbird options:
+```/redbird/derek.com				{ "hosts" : ["10.10.10.10", "11.11.11.11"]}```
+```/redbird/johnathan.com   { "ssl" : true }```
+
 ##Roadmap
 
 - Statistics (number of connections, load, response times, etc)
 - CORS support.
 - Rate limiter.
 - Simple IP Filtering.
-- Automatic routing via Redis or Etcd backend.
-
+- Automatic routing via Redis.
 
 ##Reference
 
@@ -251,7 +271,7 @@ __Arguments__
 
 Register a new route. As soon as this method is called, the proxy will
 start routing the sources to the given targets.
-  
+
 __Arguments__
 
 ```javascript
@@ -278,12 +298,12 @@ __Arguments__
 
  Unregisters a route. After calling this method, the given route will not
  be proxied anymore.
-  
+
 __Arguments__
 
 ```javascript
     src {String|URL} A string or a url parsed by node url module.
-    target {String|URL} A string or a url parsed by node url module. If not 
+    target {String|URL} A string or a url parsed by node url module. If not
     specified, it will unregister all routes for the given source.
 ```
 
@@ -293,10 +313,5 @@ __Arguments__
 #### Redbird##close()
 
  Close the proxy stoping all the incoming connections.
- 
+
 ---------------------------------------
-
-
-
-
-
