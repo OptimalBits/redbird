@@ -223,7 +223,7 @@ var options = {
 require('redbird').etcd(redbird,options);
 ```
 etcd records can be created in one of two ways, either as a target destination pair:
-```/redbird/example.com			"8.8.8.8"
+```/redbird/example.com			"8.8.8.8"```
 or by passing a JSON object containing multiple hosts, and redbird options:
 ```/redbird/derek.com				{ "hosts" : ["10.10.10.10", "11.11.11.11"]}```
 ```/redbird/johnathan.com   { "ssl" : true }```
