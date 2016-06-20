@@ -289,10 +289,34 @@ __Arguments__
 
 ---------------------------------------
 
+<a name="notFound"/>
+#### Redbird##notFound(callback)
+
+ Gives Redbird a callback function with two parameters, the ExpressJS request 
+ and response objects, respectively, which will be called when a proxy route is
+ not found. The default is
+
+```javascript
+function(req, res){
+  res.statusCode = 404;
+  res.write('Not Found');
+  res.end();
+};
+```
+
+__Arguments__
+
+```javascript
+    src {Function(req,res)} The callback which will be called with the request 
+      and response parameters (from ExpressJS) when a proxy route is not found.
+```
+
+---------------------------------------
+
 <a name="close"/>
 #### Redbird##close()
 
- Close the proxy stoping all the incoming connections.
+ Close the proxy, stopping all incoming connections.
  
 ---------------------------------------
 
