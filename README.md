@@ -218,6 +218,12 @@ var redbird = new require('redbird')({
 
 ##Reference
 
+[constructor](#redbird)
+[register](#register)
+[unregister](#unregister)
+[notFound](#notFound)
+[close](#close)
+
 <a name="redbird"/>
 ###Redbird(opts)
 
@@ -295,14 +301,14 @@ __Arguments__
  Gives Redbird a callback function with two parameters, the ExpressJS request 
  and response objects, respectively, which will be called when a proxy route is
  not found. The default is
-
 ```javascript
-function(req, res){
-  res.statusCode = 404;
-  res.write('Not Found');
-  res.end();
-};
+    function(req, res){
+      res.statusCode = 404;
+      res.write('Not Found');
+      res.end();
+    };
 ```
+.
 
 __Arguments__
 
