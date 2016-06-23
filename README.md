@@ -241,6 +241,12 @@ or by passing a JSON object containing multiple hosts, and redbird options:
 
 ##Reference
 
+[constructor](#redbird)
+[register](#register)
+[unregister](#unregister)
+[notFound](#notFound)
+[close](#close)
+
 <a name="redbird"/>
 ###Redbird(opts)
 
@@ -256,7 +262,7 @@ __Arguments__
     	ssl: { // Optional SSL proxying.
     		port: {Number} // SSL port the proxy will listen to.
     		// Default certificates
-    		key: keyPath,  
+    		key: keyPath,
     		cert: certPath,
     		ca: caPath // Optional.
             redirect: true, // Disable HTTPS autoredirect to this route.
@@ -308,6 +314,30 @@ __Arguments__
     src {String|URL} A string or a url parsed by node url module.
     target {String|URL} A string or a url parsed by node url module. If not
     specified, it will unregister all routes for the given source.
+```
+
+---------------------------------------
+
+<a name="notFound"/>
+#### Redbird##notFound(callback)
+
+ Gives Redbird a callback function with two parameters, the HTTP request
+ and response objects, respectively, which will be called when a proxy route is
+ not found. The default is
+```javascript
+    function(req, res){
+      res.statusCode = 404;
+      res.write('Not Found');
+      res.end();
+    };
+```
+.
+
+__Arguments__
+
+```javascript
+    src {Function(req, res)} The callback which will be called with the HTTP
+      request and response objects when a proxy route is not found.
 ```
 
 ---------------------------------------
