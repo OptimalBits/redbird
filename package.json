@@ -1,6 +1,6 @@
 {
   "name": "redbird",
-  "version": "0.4.15",
+  "version": "0.5.0",
   "description": "A reverse proxy with support for dynamic tables",
   "main": "index.js",
   "scripts": {
