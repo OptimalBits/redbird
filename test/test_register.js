@@ -22,6 +22,8 @@ describe("Route registration", function(){
 
 		expect(redbird.routing).to.have.property("example.com")
 
+		expect(redbird.resolve('example.com')).to.be.an("object");
+
 		var host = redbird.routing["example.com"];
 		expect(host).to.be.an("array");
 		expect(host[0]).to.have.property('path')
@@ -34,7 +36,21 @@ describe("Route registration", function(){
 		expect(redbird.resolve('example.com')).to.be.an("undefined")
 
 		redbird.close();
-	})
+	});
+
+	it("should resolve domains as case insensitive", function(){
+		var redbird = Redbird(opts);
+
+		expect(redbird.routing).to.be.an("object");
+
+		redbird.register('example.com', '192.168.1.2:8080');
+
+		expect(redbird.resolve('Example.com')).to.be.an("object");
+
+		redbird.close();
+	});
+
+
 	it("should register multiple routes", function(){
 		var redbird = Redbird(opts);
 

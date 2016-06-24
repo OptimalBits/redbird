@@ -93,7 +93,7 @@ describe("Custom Resolver", function(){
 
   });
 
-  
+
   it('Should properly convert and cache route to routeObject', function () {
 
     var builder = Redbird.buildRoute;
@@ -121,7 +121,6 @@ describe("Custom Resolver", function(){
 
     var result2 = builder(testString);
     expect(result2).to.be.eq(result);
-    expect(result2._hits).to.be.above(1);
 
     //case with object
 
@@ -138,7 +137,6 @@ describe("Custom Resolver", function(){
     //test object caching.
     var testObjectResult_2 = builder(testObject_1);
     expect(testObjectResult_1).to.be.eq(testObjectResult_2);
-    expect(testObjectResult_2._hits).to.be.above(1);
 
     var testObject_2= {url: ['http://127.0.0.1', 'http://123.1.1.1']}
     var testResult2  = builder(testObject_2);

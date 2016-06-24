@@ -28,6 +28,7 @@
     "dolphin": "^0.0.7",
     "http-proxy": "1.12.1",
     "lodash": "^4.13.1",
+    "lru-cache": "^4.0.1",
     "node-etcd": "^4.2.1",
     "object-hash": "^1.1.2",
     "valid-url": "^1.0.9"
