@@ -45,7 +45,9 @@ describe("Route registration", function(){
 
 		redbird.register('example.com', '192.168.1.2:8080');
 
-		expect(redbird.resolve('Example.com')).to.be.an("object");
+		var target = redbird.resolve('Example.com');
+		expect(target).to.be.an("object");
+		expect(target.urls[0].hostname).to.be.equal('192.168.1.2');
 
 		redbird.close();
 	});
