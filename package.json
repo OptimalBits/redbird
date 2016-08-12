@@ -25,11 +25,11 @@
   "dependencies": {
     "bluebird": "^3.4.0",
     "bunyan": "^1.8.1",
-    "dolphin": "*",
-    "http-proxy": "1.12.1",
+    "dolphin": "^0.0.10",
+    "http-proxy": "^1.14.0",
     "lodash": "^4.13.1",
     "lru-cache": "^4.0.1",
-    "node-etcd": "^4.2.1",
+    "node-etcd": "^5.0.3",
     "object-hash": "^1.1.2",
     "valid-url": "^1.0.9"
   },
