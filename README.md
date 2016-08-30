@@ -72,14 +72,38 @@ proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
 
+
+// Letsencrypt support
+// With redbird you can get zero conf and automatic SSL certificates for your domains
+redbird.register('example.com', 'http://172.60.80.2:8082', {
+	ssl: {
+    letsencrypt: 'john@example.com',
+  }
+});
+
+//
+// Letsencrypt requires a minimal web server for handling the challenges, this is by default on port 3000
+// it can be configured when initiating the proxy:
+var proxy = require('redbird')({
+  letsencrypt: {
+    path: __dirname + '/certs',
+    port:9999
+  }
+});
+
+
 ```
-
-
 ##About HTTPS
 
 The HTTPS proxy supports virtual hosts by using SNI (which most modern browsers support: IE7 and above).
 The proxying is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
 
+###Letsencrypt
+
+Some important considerations when using Letsencypt. You need to agree to Letsencrypt [terms of service](https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf). When using
+letsencrypt, the obtained certificates will be copied to disk to the specified path. Its your responsibility to backup, or save persistently when applicable. Keep in mind that
+these certificates needs to be handled with care so that they cannot be accessed by malicious users. The certificates will be renewed every
+2 months automatically forever.
 
 ##HTTPS Example
 
