@@ -17,12 +17,18 @@ Developed by [manast](http://twitter.com/manast)
 [![BuildStatus](https://secure.travis-ci.org/OptimalBits/redbird.png?branch=master)](http://travis-ci.org/OptimalBits/redbird)
 [![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
 
+##HOT
+
+We have now support for automatic generation of SSL certificates using Letsencrypt. Zero config setup for your
+SSL protected services that just works.
+
 ##Features
 
 - Flexible and easy routing.
 - Websockets.
 - Seamless SSL Support (HTTPS -> HTTP proxy)
 - Automatic HTTP to HTTPS redirects.
+- Automatic SSL Certificates generation and renewal.
 - Load balancer.
 - Register and unregister routes programatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
