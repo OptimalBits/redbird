@@ -34,6 +34,7 @@
     "lru-cache": "^4.0.1",
     "node-etcd": "^4.2.1",
     "object-hash": "^1.1.2",
+    "safetimeout": "^0.1.1",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {

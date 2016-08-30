@@ -77,7 +77,10 @@ proxy.register("balance.me", "http://172.17.43.6:8080");
 // With redbird you can get zero conf and automatic SSL certificates for your domains
 redbird.register('example.com', 'http://172.60.80.2:8082', {
 	ssl: {
-    letsencrypt: 'john@example.com',
+    letsencrypt: {
+      email: 'john@example.com', // Domain owner/admin email
+      production: true, // WARNING: Only use this flag when the proxy is verified to work correctly to avoid being banned!
+    }
   }
 });
 
