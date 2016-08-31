@@ -20,7 +20,7 @@ Developed by [manast](http://twitter.com/manast)
 ##HOT
 
 We have now support for automatic generation of SSL certificates using Letsencrypt. Zero config setup for your
-SSL protected services that just works.
+TLS protected services that just works.
 
 ##Features
 
@@ -28,7 +28,7 @@ SSL protected services that just works.
 - Websockets.
 - Seamless SSL Support (HTTPS -> HTTP proxy)
 - Automatic HTTP to HTTPS redirects.
-- Automatic SSL Certificates generation and renewal.
+- Automatic TLS Certificates generation and renewal.
 - Load balancer.
 - Register and unregister routes programatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
