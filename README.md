@@ -92,7 +92,9 @@ redbird.register('example.com', 'http://172.60.80.2:8082', {
 
 //
 // Letsencrypt requires a minimal web server for handling the challenges, this is by default on port 3000
-// it can be configured when initiating the proxy:
+// it can be configured when initiating the proxy. This web server is only used by redbird internally so most of the time
+// you  do not need to do anything special other than avoid having other web services in the same host running
+// on the same port.
 var proxy = require('redbird')({
   letsencrypt: {
     path: __dirname + '/certs',
