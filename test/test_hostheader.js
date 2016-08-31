@@ -34,9 +34,9 @@ describe("Target with a hostname", function(){
 			redbird.close();
 			done();
 		});
-    
+
 	})
-	
+
 	it("Should not have the host header passed to the target", function(done){
 		var redbird = Redbird(opts);
 
@@ -54,7 +54,7 @@ describe("Target with a hostname", function(){
 			redbird.close();
 			done();
 		});
-    
+
 	})
 
 	it("Should return 404 after route is unregister", function(done){
