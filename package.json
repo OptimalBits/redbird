@@ -26,7 +26,7 @@
     "bluebird": "^3.4.0",
     "bunyan": "^1.8.1",
     "dolphin": "*",
-    "http-proxy": "1.12.1",
+    "http-proxy": "^1.14.0",
     "le-challenge-fs": "^2.0.4",
     "le-store-certbot": "^2.0.3",
     "letsencrypt": "^2.1.6",
