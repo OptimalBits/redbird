@@ -99,23 +99,17 @@ redbird.register('example.com', 'http://172.60.80.2:8082', {
 // it can be configured when initiating the proxy. This web server is only used by redbird internally so most of the time
 // you  do not need to do anything special other than avoid having other web services in the same host running
 // on the same port.
-var proxy = require('redbird')({
-  letsencrypt: {
-    path: __dirname + '/certs',
-    port:9999
-  }
-});
 
 //
 // HTTP2 Support using Letsencript for the certificates
 //
-redbird.register('example.com', 'http://172.60.80.2:8082', {
-	ssl: {
+var proxy = require('redbird')({
+  letsencrypt: {
+    path: __dirname + '/certs',
+    port:9999
+  },
+  ssl: {
     http2: true,
-    letsencrypt: {
-      email: 'john@example.com', // Domain owner/admin email
-      production: true, // WARNING: Only use this flag when the proxy is verified to work correctly to avoid being banned!
-    }
   }
 });
 
