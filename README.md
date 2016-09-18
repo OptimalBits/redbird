@@ -1,5 +1,5 @@
 #Redbird Reverse Proxy
-##with built in Cluster, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
+##with built in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
 
 
 ![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
@@ -16,6 +16,10 @@ Developed by [manast](http://twitter.com/manast)
 
 [![BuildStatus](https://secure.travis-ci.org/OptimalBits/redbird.png?branch=master)](http://travis-ci.org/OptimalBits/redbird)
 [![NPM version](https://badge.fury.io/js/redbird.svg)](http://badge.fury.io/js/redbird)
+
+##SUPER HOT
+Support for HTTP2. You can now enable HTTP2 just by setting the HTTP2 flag to true. Keep in mind that HTTP2 requires
+SSL/TLS certificates. Thankfully we also support Letsencript so this becomes easy as pie.
 
 ##HOT
 
@@ -102,6 +106,18 @@ var proxy = require('redbird')({
   }
 });
 
+//
+// HTTP2 Support using Letsencript for the certificates
+//
+redbird.register('example.com', 'http://172.60.80.2:8082', {
+	ssl: {
+    http2: true,
+    letsencrypt: {
+      email: 'john@example.com', // Domain owner/admin email
+      production: true, // WARNING: Only use this flag when the proxy is verified to work correctly to avoid being banned!
+    }
+  }
+});
 
 ```
 ##About HTTPS
@@ -117,6 +133,8 @@ these certificates needs to be handled with care so that they cannot be accessed
 2 months automatically forever.
 
 ##HTTPS Example
+
+(NOTE: This is a legacy example not needed when using Letsencript)
 
 Conceptually HTTPS is easy, but it is also easy to struggle getting it right. With redbird its straightforward, check this complete example:
 
