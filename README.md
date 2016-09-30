@@ -1,5 +1,5 @@
 #Redbird Reverse Proxy
-##with built in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
+##With built in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
 
 
 ![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
@@ -28,17 +28,17 @@ TLS protected services that just works.
 
 ##Features
 
-- Flexible and easy routing.
-- Websockets.
+- Flexible and easy routing
+- Websockets
 - Seamless SSL Support (HTTPS -> HTTP proxy)
-- Automatic HTTP to HTTPS redirects.
-- Automatic TLS Certificates generation and renewal.
-- Load balancer.
+- Automatic HTTP to HTTPS redirects
+- Automatic TLS Certificates generation and renewal
+- Load balancer
 - Register and unregister routes programatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
-- Cluster support that enables automatic multi-process.
-- Based on top of rock-solid node-http-proxy and battle tested on production in many sites.
-- Optional logging based on bunyan.
+- Cluster support that enables automatic multi-process
+- Based on top of rock-solid node-http-proxy and battle tested on production in many sites
+- Optional logging based on bunyan
 
 ##Install
 
@@ -50,7 +50,7 @@ npm install redbird
 ##Example
 
 
-You can programatically register or unregister routes dynamically even if the proxy is already running:
+You can programmatically register or unregister routes dynamically even if the proxy is already running:
 
 ```js
 var proxy = require('redbird')({port: 80});
@@ -214,7 +214,7 @@ redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 
 ##Docker support
 If you use docker, you can tell Redbird to automatically register routes based on image
-names. You register your image name and then everytime a container starts from that image,
+names. You register your image name and then every time a container starts from that image,
 it gets registered, and unregistered if the container is stopped. If you run more than one
 container from the same image, Redbird will load balance following a round-robin algorithm:
 
@@ -471,6 +471,6 @@ __Arguments__
 <a name="close"/>
 #### Redbird##close()
 
- Close the proxy stoping all the incoming connections.
+ Close the proxy stopping all the incoming connections.
 
 ---------------------------------------
