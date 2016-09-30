@@ -76,7 +76,7 @@ proxy.register("abc.example.com/media", "http://172.17.42.5:8080");
 proxy.register("foobar.example.com", "http://172.17.42.6:8080/foobar");
 
 // You can also enable load balancing by registering the same hostname with different
-// target hosts. The requests will be evenly balanced using a Round Robin scheme.
+// target hosts. The requests will be evenly balanced using a Round-Robin scheme.
 proxy.register("balance.me", "http://172.17.40.6:8080");
 proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
@@ -216,7 +216,7 @@ redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 If you use docker, you can tell Redbird to automatically register routes based on image
 names. You register your image name and then everytime a container starts from that image,
 it gets registered, and unregistered if the container is stopped. If you run more than one
-container from the same image, redbird will load balance following a round robin schema:
+container from the same image, redbird will load balance following a round-robin algorithm:
 
 ```js
 var redbird = require('redbird')({
