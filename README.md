@@ -23,7 +23,7 @@ SSL/TLS certificates. Thankfully we also support LetsEncrypt so this becomes eas
 
 ##HOT
 
-We have now support for automatic generation of SSL certificates using [LetsEncrypt](#LetsEncrypt). Zero config setup for your
+We have now support for automatic generation of SSL certificates using [LetsEncrypt](#letsencrypt). Zero config setup for your
 TLS protected services that just works.
 
 ##Features
