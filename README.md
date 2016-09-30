@@ -19,11 +19,11 @@ Developed by [manast](http://twitter.com/manast)
 
 ##SUPER HOT
 Support for HTTP2. You can now enable HTTP2 just by setting the HTTP2 flag to true. Keep in mind that HTTP2 requires
-SSL/TLS certificates. Thankfully we also support Letsencript so this becomes easy as pie.
+SSL/TLS certificates. Thankfully we also support LetsEncrypt so this becomes easy as pie.
 
 ##HOT
 
-We have now support for automatic generation of SSL certificates using Letsencrypt. Zero config setup for your
+We have now support for automatic generation of SSL certificates using [LetsEncrypt](#LetsEncrypt). Zero config setup for your
 TLS protected services that just works.
 
 ##Features
@@ -83,8 +83,8 @@ proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
 
 
-// Letsencrypt support
 // With redbird you can get zero conf and automatic SSL certificates for your domains
+// LetsEncrypt support
 redbird.register('example.com', 'http://172.60.80.2:8082', {
 	ssl: {
     letsencrypt: {
@@ -95,13 +95,13 @@ redbird.register('example.com', 'http://172.60.80.2:8082', {
 });
 
 //
-// Letsencrypt requires a minimal web server for handling the challenges, this is by default on port 3000
 // it can be configured when initiating the proxy. This web server is only used by redbird internally so most of the time
+// LetsEncrypt requires a minimal web server for handling the challenges, this is by default on port 3000
 // you  do not need to do anything special other than avoid having other web services in the same host running
 // on the same port.
 
 //
-// HTTP2 Support using Letsencript for the certificates
+// HTTP2 Support using LetsEncrypt for the certificates
 //
 var proxy = require('redbird')({
   letsencrypt: {
@@ -119,16 +119,16 @@ var proxy = require('redbird')({
 The HTTPS proxy supports virtual hosts by using SNI (which most modern browsers support: IE7 and above).
 The proxying is performed by hostname, so you must use the same SSL certificates for a given hostname independently of its paths.
 
-###Letsencrypt
+###LetsEncrypt
 
-Some important considerations when using Letsencypt. You need to agree to Letsencrypt [terms of service](https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf). When using
-letsencrypt, the obtained certificates will be copied to disk to the specified path. Its your responsibility to backup, or save persistently when applicable. Keep in mind that
+Some important considerations when using LetsEncrypt. You need to agree to LetsEncrypt [terms of service](https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf). When using
+LetsEncrypt, the obtained certificates will be copied to disk to the specified path. Its your responsibility to backup, or save persistently when applicable. Keep in mind that
 these certificates needs to be handled with care so that they cannot be accessed by malicious users. The certificates will be renewed every
 2 months automatically forever.
 
 ##HTTPS Example
 
-(NOTE: This is a legacy example not needed when using Letsencript)
+(NOTE: This is a legacy example not needed when using LetsEncrypt)
 
 Conceptually HTTPS is easy, but it is also easy to struggle getting it right. With redbird its straightforward, check this complete example:
 
