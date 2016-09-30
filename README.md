@@ -307,21 +307,21 @@ Resolvers should be:
 Resolvers can be defined when initializing the proxy object with the `resolvers` parameter. An example is below:
 
 ```javascript
- //for every URL path that starts with /api/, send request to upstream API service
+ // for every URL path that starts with /api/, send request to upstream API service
  var customResolver1 = function(host, url) {
    if(/^\/api\//.test(url)){
       return 'http://127.0.0.1:8888';
    }
  };
 
- //assign high priority
+ // assign high priority
  customResolver1.priority = 100;
 
  var proxy = new require('redbird')({
     port: 8080,
     resolvers: [
     customResolver1,
-    //uses the same priority as default resolver, so will be called after default resolver
+    // uses the same priority as default resolver, so will be called after default resolver
     function(host, url) {
       if(/\.example\.com/.test(host)){
         return 'http://127.0.0.1:9999'
@@ -338,7 +338,7 @@ You can add or remove resolvers at runtime, this is useful in situations where y
 ```javascript
 var topPriority = function(host, url) {
   return /app\.example\.com/.test(host) ? {
-    //load balanced
+    // load balanced
     url: [
     'http://127.0.0.1:8000',
     'http://128.0.1.1:9999'
@@ -350,7 +350,7 @@ topPriority.priority = 200;
 proxy.addResolver(topPriority);
 
 
-//remove top priority after 10 minutes,
+// remove top priority after 10 minutes,
 setTimeout(function() {
   proxy.removeResolver(topPriority);
 }, 600000);
