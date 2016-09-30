@@ -83,8 +83,8 @@ proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
 
 
-// With redbird you can get zero conf and automatic SSL certificates for your domains
 // LetsEncrypt support
+// With Redbird you can get zero conf and automatic SSL certificates for your domains
 redbird.register('example.com', 'http://172.60.80.2:8082', {
 	ssl: {
     letsencrypt: {
@@ -95,8 +95,8 @@ redbird.register('example.com', 'http://172.60.80.2:8082', {
 });
 
 //
-// it can be configured when initiating the proxy. This web server is only used by redbird internally so most of the time
 // LetsEncrypt requires a minimal web server for handling the challenges, this is by default on port 3000
+// it can be configured when initiating the proxy. This web server is only used by Redbird internally so most of the time
 // you  do not need to do anything special other than avoid having other web services in the same host running
 // on the same port.
 
@@ -130,7 +130,7 @@ these certificates needs to be handled with care so that they cannot be accessed
 
 (NOTE: This is a legacy example not needed when using LetsEncrypt)
 
-Conceptually HTTPS is easy, but it is also easy to struggle getting it right. With redbird its straightforward, check this complete example:
+Conceptually HTTPS is easy, but it is also easy to struggle getting it right. With Redbird its straightforward, check this complete example:
 
 1) Generate a localhost development SSL certificate:
 
@@ -216,7 +216,7 @@ redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 If you use docker, you can tell Redbird to automatically register routes based on image
 names. You register your image name and then everytime a container starts from that image,
 it gets registered, and unregistered if the container is stopped. If you run more than one
-container from the same image, redbird will load balance following a round-robin algorithm:
+container from the same image, Redbird will load balance following a round-robin algorithm:
 
 ```js
 var redbird = require('redbird')({
@@ -229,9 +229,9 @@ require('redbird')
 ```
 
 ##etcd backend
-RedBird can use [node-etcd](https://github.com/stianeikeland/node-etcd) to automatically create proxy records from an etcd cluster. Configuration
+Redbird can use [node-etcd](https://github.com/stianeikeland/node-etcd) to automatically create proxy records from an etcd cluster. Configuration
 is accomplished by passing an array of [options](https://github.com/stianeikeland/node-etcd#constructor-options), plus the hosts and path variables,
-which define which etcd cluster hosts, and which directory within those hosts, that redbird should poll for updates.
+which define which etcd cluster hosts, and which directory within those hosts, that Redbird should poll for updates.
 
 ```js
 var redbird = require('redbird')({
@@ -247,7 +247,7 @@ require('redbird').etcd(redbird,options);
 ```
 etcd records can be created in one of two ways, either as a target destination pair:
 ```/redbird/example.com			"8.8.8.8"```
-or by passing a JSON object containing multiple hosts, and redbird options:
+or by passing a JSON object containing multiple hosts, and Redbird options:
 ```
 /redbird/derek.com				{ "hosts" : ["10.10.10.10", "11.11.11.11"]}
 /redbird/johnathan.com    { "ssl" : true }
@@ -257,7 +257,7 @@ or by passing a JSON object containing multiple hosts, and redbird options:
 
 ##Cluster support
 Redbird support automatic support for node cluster. Just specify in the options object
-the number of processes that you want redbird to use. Redbird will automatically re-start
+the number of processes that you want Redbird to use. Redbird will automatically re-start
 any thread thay may crash automatically, increasing even more its reliability.
 
 ```js
@@ -281,7 +281,7 @@ var redbird = new require('redbird')({
 
 ##Custom Resolvers
 
-With custom resolvers, you can decide how the proxy server handles request. Custom resolvers allow you to extend redbird considerably. With custom resolvers, you can perform the following:
+With custom resolvers, you can decide how the proxy server handles request. Custom resolvers allow you to extend Redbird considerably. With custom resolvers, you can perform the following:
 
 - Do path-based routing
 - Do wildcard domain routing.
@@ -298,7 +298,7 @@ Resolvers should be:
   {
      url: string or array of string [required], when array, the urls will be load-balanced across.
      path: path prefix for route, [optional], defaults to '/',
-     opts: {} //redbird target options, see Redbird.register() [optional],
+     opts: {} // Redbird target options, see Redbird.register() [optional],
   }
 ```
 
