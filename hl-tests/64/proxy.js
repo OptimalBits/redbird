@@ -1,14 +1,14 @@
 'use strict';
 
 
-//If URL has/.well-known/, send request to upstream API service
+// If URL has/.well-known/, send request to upstream API service
 var customResolver1 = function (host, url) {
   if (/^\/.well-known\//.test(url)) {
     return 'http://localhost:3000';
   }
 };
 
-//assign high priority
+// assign high priority
 customResolver1.priority = 100;
 
 var proxy = new require('../../index.js')({

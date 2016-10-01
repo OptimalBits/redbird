@@ -47,7 +47,7 @@ describe("Custom Resolver", function(){
 		redbird.close();
 
 
-    //test when an array is sent in as resolvers.
+    // test when an array is sent in as resolvers.
     options.resolvers = [resolver];
     redbird = new Redbird(options);
     expect(redbird.resolvers.length).to.be.eq(2);
@@ -61,7 +61,7 @@ describe("Custom Resolver", function(){
     redbird.close();
 
 
-    //test when invalid resolver is added
+    // test when invalid resolver is added
     options.resolvers = {};
     expect(function () {
        new Redbird(options)
@@ -98,7 +98,7 @@ describe("Custom Resolver", function(){
 
     var builder = Redbird.buildRoute;
 
-    //invalid input
+    // invalid input
     expect(builder(function () {})).to.be.null;
     expect(builder([])).to.be.null;
     expect(builder(2016)).to.be.null;
@@ -109,7 +109,7 @@ describe("Custom Resolver", function(){
     expect(testRouteResult.isResolved).to.be.undefined;
 
 
-    //case string:
+    // case string:
     var testString = 'http://127.0.0.1:8888';
     var result = builder(testString);
     expect(result.path).to.be.eq('/');
@@ -122,7 +122,7 @@ describe("Custom Resolver", function(){
     var result2 = builder(testString);
     expect(result2).to.be.eq(result);
 
-    //case with object
+    // case with object
 
      var testObject_1= {path:'/api', url: 'http://127.0.0.1'},
        testObjectResult_1 = builder(testObject_1);
@@ -134,7 +134,7 @@ describe("Custom Resolver", function(){
     expect(testObjectResult_1.isResolved).to.be.true;
 
 
-    //test object caching.
+    // test object caching.
     var testObjectResult_2 = builder(testObject_1);
     expect(testObjectResult_1).to.be.eq(testObjectResult_2);
 
@@ -162,36 +162,36 @@ describe("Custom Resolver", function(){
 
     result = proxy.resolve('randomsite.example.com', '/anywhere');
 
-    //must match the resolver
+    // must match the resolver
     expect(result).to.not.be.null;
     expect(result).to.not.be.undefined;
     expect(result.urls.length).to.be.above(0);
     expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
 
-    //expect route to match resolver even though it matches registered address
+    // expect route to match resolver even though it matches registered address
     result = proxy.resolve('mysite.example.com', '/somewhere');
     expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
 
-    //use default resolver, as custom resolver should ignore input.
+    // use default resolver, as custom resolver should ignore input.
     result = proxy.resolve('mysite.example.com', '/ignore');
     expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
 
 
-    //make custom resolver low priority and test.
-    //result should match default resolver
+    // make custom resolver low priority and test.
+    // result should match default resolver
     resolver.priority = -1;
     proxy.addResolver(resolver);
     result = proxy.resolve('mysite.example.com', '/somewhere');
     expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
 
 
-    //both custom and default resolvers should ignore
+    // both custom and default resolvers should ignore
     result = proxy.resolve('somesite.example.com', '/ignore');
     expect(result).to.be.undefined;
 
     proxy.removeResolver(resolver);
-    //for path-based routing
-    //when resolver path doesn't match that of url, skip
+    // for path-based routing
+    // when resolver path doesn't match that of url, skip
 
     resolver = function () {
       return {

@@ -11,8 +11,8 @@ var proxy = new require('../../index.js')({
  // bunyan: true,
   port: 8080,
   secure: true,
-  //http2: true,
-  //cluster: 8
+  // http2: true,
+  // cluster: 8
   ssl: { port: 4443 },
 })
 
@@ -32,25 +32,25 @@ proxy.register("localhost", "127.0.0.1:3000", {
 });
 
 
-//proxy.register("localhost", "127.0.0.1:3000");
+// proxy.register("localhost", "127.0.0.1:3000");
 
 var http = require('http');
 var keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: 1000 });
-//http.globalAgent = keepAliveAgent;
+// http.globalAgent = keepAliveAgent;
 
 /*
 var httpProxy = require('http-proxy');
 httpProxy.createProxyServer({target:'http://localhost:3000', agent: keepAliveAgent}).listen(8090);
-//httpProxy.createProxyServer({target:'http://localhost:3000'}).listen(8080);
+// httpProxy.createProxyServer({target:'http://localhost:3000'}).listen(8080);
 
-//var reqFast = require('req-fast');
-//var request = require('request');
+// var reqFast = require('req-fast');
+// var request = require('request');
 var needle = require('needle');
 
 http.createServer(function(req, res){
-  //request.get('http://127.0.0.1:3000').pipe(res);
-  //reqFast('http://127.0.0.1:3000').pipe(res);
-  //needle.request('get', 'http://127.0.0.1:3000', null, {agent: keepAliveAgent, connection: 'keep-alive'}).pipe(res);
+  // request.get('http://127.0.0.1:3000').pipe(res);
+  // reqFast('http://127.0.0.1:3000').pipe(res);
+  // needle.request('get', 'http://127.0.0.1:3000', null, {agent: keepAliveAgent, connection: 'keep-alive'}).pipe(res);
   http.get({
     hostname: 'localhost',
     port: 3000,
