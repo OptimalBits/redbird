@@ -212,6 +212,45 @@ redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 
 ```
 
+Edge case scenario: you have HTTPS server with two IP  addresses assigned and you clients are old software without SNI support. In this case on both IP addresses they will receive the same fallback certificate. I.e. some of domains will have wrong certificate. To handle this case you can create two HTTPS servers each bound to its own IP address and serving appropriate certificate.
+
+```js
+var redbird = new require('redbird')({
+	port: 8080,
+
+	// Specify filenames to default SSL certificates (in case SNI is not supported by the
+	// user's browser)
+	ssl: [
+		{
+			port: 443,
+			ip: '123.45.67.10',  // assigned to tutorial.com
+			key: 'certs/tutorial.key',
+			cert: 'certs/tutorial.crt',
+		},
+		{
+			port: 443,
+			ip: '123.45.67.11', // assigned to my-other-domain.com
+			key: 'certs/my-other-domain.key',
+			cert: 'certs/my-other-domain.crt',
+		}				
+	]
+});
+
+// These certificates will be served if SNI is supported
+redbird.register('tutorial.com', 'http://192.168.0.10:8001', {
+	ssl: {
+		key: 'certs/tutorial.key',
+		cert: 'certs/tutorial.crt',
+	}
+});
+redbird.register('my-other-domain.com', 'http://192.168.0.12:8001', {
+	ssl: {
+		key: 'certs/my-other-domain.key',
+		cert: 'certs/my-other-domain.crt',
+	}
+});
+```
+
 ##Docker support
 If you use docker, you can tell Redbird to automatically register routes based on image
 names. You register your image name and then every time a container starts from that image,
