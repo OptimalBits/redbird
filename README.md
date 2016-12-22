@@ -212,7 +212,7 @@ redbird.register('tutorial.com', 'https://172.60.80.2:8083', {
 
 ```
 
-Edge case scenario: you have HTTPS server with two IP  addresses assigned and you clients are old software without SNI support. In this case on both IP addresses they will receive the same fallback certificate. I.e. some of domains will have wrong certificate. To handle this case you can create two HTTPS servers each bound to its own IP address and serving appropriate certificate.
+Edge case scenario: you have an HTTPS server with two IP addresses assigned to it and your clients use old software without SNI support. In this case, both IP addresses will receive the same fallback certificate. I.e. some of the domains will get a wrong certificate. To handle this case you can create two HTTPS servers each one bound to its own IP address and serving the appropriate certificate.
 
 ```js
 var redbird = new require('redbird')({
