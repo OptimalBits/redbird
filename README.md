@@ -262,9 +262,10 @@ var redbird = require('redbird')({
   port: 8080,
 });
 
-require('redbird')
-  .docker(redbird)
-  .register("example.com", 'company/myimage:latest');
+var docker = require('redbird').docker;
+docker(redbird).register("old.api.com", 'company/api:v1.0.0');
+docker(redbird).register("stable.api.com", 'company/api:v2.*');
+docker(redbird).register("preview.api.com", 'company/api:v[3-9].*');
 ```
 
 ##etcd backend
