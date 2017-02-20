@@ -298,6 +298,73 @@ describe("TLS/SSL", function () {
 		expect(redbird.certs['example.com']).to.be.an("undefined");
 
 	})
+	it('Should bind https servers to different ip addresses', function(testDone) {
+
+		var isPortTaken = function(port, ip, done) {
+		  var net = require('net')
+		  var tester = net.createServer()
+		  .once('error', function (err) {
+		    if (err.code != 'EADDRINUSE') return done(err)
+		    done(null, true)
+		  })
+		  .once('listening', function() {
+		    tester.once('close', function() { done(null, false) })
+		    .close()
+		  })
+		  .listen(port, ip)
+		}
+
+		var redbird = Redbird({
+		    bunyan: false,
+			port: 8080,
+
+		    // Specify filenames to default SSL certificates (in case SNI is not supported by the
+		    // user's browser)
+		    ssl: [
+				{
+					port: 4433,
+					key: 'dummy',
+					cert: 'dummy',
+					ip: '127.0.0.1'
+				},
+				{
+					port: 4434,
+					key: 'dummy',
+					cert: 'dummy',
+					ip: '127.0.0.1'
+				}
+		    ]
+		});
+
+		redbird.register('mydomain.com', 'http://127.0.0.1:8001', {
+			ssl: {
+				key: 'dummy',
+				cert: 'dummy',
+				ca: 'dummym'
+			}
+		});
+
+		var portsTaken = 0;
+		var portsChecked = 0;
+
+		function portsTakenDone(err, taken) {
+			portsChecked++;
+			if (err) { throw err; }
+			if (taken) { portsTaken++; }
+			if ( portsChecked == 2 ) {
+				portsCheckDone();
+			}
+		}
+
+		function portsCheckDone() {
+			expect(portsTaken).to.be.eql(2);
+			redbird.close();
+			testDone();
+		}
+
+		isPortTaken(4433, '127.0.0.1', portsTakenDone);
+		isPortTaken(4434, '127.0.0.1', portsTakenDone);
+	});
 })
 
 
