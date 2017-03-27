@@ -98,6 +98,34 @@ describe("Target with a hostname", function(){
 	})
 })
 
+describe("Request with forwarded host header", function () {
+	it("should prefer forwarded hostname if desired", function () {
+		var redbird = Redbird({
+			bunyan: false,
+			preferForwardedHost: true
+		});
+
+		expect(redbird.routing).to.be.an("object");
+		var req = { headers: {host: '127.0.0.1', "x-forwarded-host": "subdomain.example.com"} }
+		
+		var source = redbird._getSource(req);
+		expect(source).to.be.eql('subdomain.example.com')
+
+		redbird.close();
+	});
+
+		it("should use original host if not further specified", function () {
+		var redbird = Redbird(opts);
+
+		expect(redbird.routing).to.be.an("object");
+		var req = { headers: { host: '127.0.0.1', "x-forwarded-host": "subdomain.example.com"} }
+		
+		var source = redbird._getSource(req);
+		expect(source).to.be.eql('127.0.0.1')
+
+		redbird.close();
+	});
+});
 
 function testServer(){
 	return new Promise(function(resolve, reject){
