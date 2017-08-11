@@ -485,7 +485,8 @@ __Arguments__
 ---------------------------------------
 
 <a name="register"/>
-#### Redbird##register(src, target, opts)
+
+#### Redbird::register(src, target, opts)
 
 Register a new route. As soon as this method is called, the proxy will
 start routing the sources to the given targets.
@@ -512,7 +513,8 @@ __Arguments__
 ---------------------------------------
 
 <a name="unregister"/>
-#### Redbird##unregister(src, [target])
+
+#### Redbird.unregister(src, [target])
 
  Unregisters a route. After calling this method, the given route will not
  be proxied anymore.
@@ -528,7 +530,8 @@ __Arguments__
 ---------------------------------------
 
 <a name="notFound"/>
-#### Redbird##notFound(callback)
+
+#### Redbird.notFound(callback)
 
  Gives Redbird a callback function with two parameters, the HTTP request
  and response objects, respectively, which will be called when a proxy route is
@@ -552,7 +555,8 @@ __Arguments__
 ---------------------------------------
 
 <a name="close"/>
-#### Redbird##close()
+
+#### Redbird.close()
 
  Close the proxy stopping all the incoming connections.
 
