@@ -400,7 +400,7 @@ setTimeout(function() {
 
 ## Replacing the default HTTP/HTTPS server modules
 
-By passing `httpServerModule: module` or `ssl: {httpsServerModule : module}` you can override the default http/https 
+By passing `serverModule: module` or `ssl: {serverModule : module}` you can override the default http/https 
 servers used to listen for connections with another module.
 
 One application for this is to enable support for PROXY protocol: This is useful if you want to use a module like 
