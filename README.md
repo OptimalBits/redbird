@@ -453,6 +453,7 @@ var proxy = require('redbird')(opts);
 [close](#close)
 
 <a name="redbird"/>
+
 ### Redbird(opts)
 
 This is the Proxy constructor. Creates a new Proxy and starts listening to
