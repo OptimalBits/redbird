@@ -325,7 +325,8 @@ var redbird = new require('redbird')({
 
 With custom resolvers, you can decide how the proxy server handles request. Custom resolvers allow you to extend Redbird considerably. With custom resolvers, you can perform the following:
 
-- Do path-based routing
+- Do path-based routing.
+- Do headers based routing.
 - Do wildcard domain routing.
 - Use variable upstream servers based on availability, for example in conjunction with Etcd or any other service discovery platform.
 - And more.
@@ -350,7 +351,7 @@ Resolvers can be defined when initializing the proxy object with the `resolvers`
 
 ```javascript
  // for every URL path that starts with /api/, send request to upstream API service
- var customResolver1 = function(host, url) {
+ var customResolver1 = function(host, url, req) {
    if(/^\/api\//.test(url)){
       return 'http://127.0.0.1:8888';
    }
@@ -364,7 +365,7 @@ Resolvers can be defined when initializing the proxy object with the `resolvers`
     resolvers: [
     customResolver1,
     // uses the same priority as default resolver, so will be called after default resolver
-    function(host, url) {
+    function(host, url, req) {
       if(/\.example\.com/.test(host)){
         return 'http://127.0.0.1:9999'
       }
@@ -378,7 +379,7 @@ Resolvers can be defined when initializing the proxy object with the `resolvers`
 You can add or remove resolvers at runtime, this is useful in situations where your upstream is tied to a service discovery service system.
 
 ```javascript
-var topPriority = function(host, url) {
+var topPriority = function(host, url, req) {
   return /app\.example\.com/.test(host) ? {
     // load balanced
     url: [
