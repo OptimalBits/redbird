@@ -298,9 +298,9 @@ or by passing a JSON object containing multiple hosts, and Redbird options:
 
 
 ## Cluster support
-Redbird support automatic support for node cluster. Just specify in the options object
-the number of processes that you want Redbird to use. Redbird will automatically re-start
-any thread thay may crash automatically, increasing even more its reliability.
+Redbird supports automatic node cluster generation. To use, just specify the number
+of processes that you want Redbird to use in the options object. Redbird will automatically
+restart any thread that crashes, increasing reliability.
 
 ```js
 var redbird = new require('redbird')({
