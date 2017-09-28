@@ -159,61 +159,71 @@ describe("Custom Resolver", function(){
 
     proxy.register('mysite.example.com', 'http://127.0.0.1:9999');
     proxy.addResolver(resolver);
-
-    result = proxy.resolve('randomsite.example.com', '/anywhere');
-
     // must match the resolver
-    expect(result).to.not.be.null;
-    expect(result).to.not.be.undefined;
-    expect(result.urls.length).to.be.above(0);
-    expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
+    return proxy.resolve('randomsite.example.com', '/anywhere')
+    .then(function (result) {
+        expect(result).to.not.be.null;
+        expect(result).to.not.be.undefined;
+        expect(result.urls.length).to.be.above(0);
+        expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
 
-    // expect route to match resolver even though it matches registered address
-    result = proxy.resolve('mysite.example.com', '/somewhere');
-    expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
+        // expect route to match resolver even though it matches registered address
+        return proxy.resolve('mysite.example.com', '/somewhere');
+      })
+      .then(function (result) {
+        expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
+        
+        // use default resolver, as custom resolver should ignore input.
+        return proxy.resolve('mysite.example.com', '/ignore');
+      })
+      .then(function (result) {
+        expect(result).to.be.undefined;
 
-    // use default resolver, as custom resolver should ignore input.
-    result = proxy.resolve('mysite.example.com', '/ignore');
-    expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
+        // make custom resolver low priority and test.
+        // result should match default resolver
+        resolver.priority = -1;
+        proxy.addResolver(resolver);
+        return proxy.resolve('mysite.example.com', '/somewhere');
+      })
+      .then(function (result) {
+        expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
 
+        // both custom and default resolvers should ignore
+        return proxy.resolve('somesite.example.com', '/ignore');
+      })
+      .then(function (result) {
+        expect(result).to.be.undefined;
+        proxy.removeResolver(resolver);
 
-    // make custom resolver low priority and test.
-    // result should match default resolver
-    resolver.priority = -1;
-    proxy.addResolver(resolver);
-    result = proxy.resolve('mysite.example.com', '/somewhere');
-    expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
+        // for path-based routing
+        // when resolver path doesn't match that of url, skip
 
+        resolver = function () {
+          return {
+            path: '/notme',
+            url: 'http://172.12.0.1/home'
+          }
+        };
+        resolver.priority = 1;
+        proxy.addResolver(resolver);
 
-    // both custom and default resolvers should ignore
-    result = proxy.resolve('somesite.example.com', '/ignore');
-    expect(result).to.be.undefined;
+        return proxy.resolve('somesite.example.com', '/notme');
+      })
+      .then(function (result) {
+        expect(result).to.not.be.undefined;
+        expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
 
-    proxy.removeResolver(resolver);
-    // for path-based routing
-    // when resolver path doesn't match that of url, skip
+        return proxy.resolve('somesite.example.com', '/notme/somewhere');
+      })
+      .then(function (result) {
+        expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
 
-    resolver = function () {
-      return {
-        path: '/notme',
-        url: 'http://172.12.0.1/home'
-      }
-    };
-    resolver.priority = 1;
-    proxy.addResolver(resolver);
-
-    result = proxy.resolve('somesite.example.com', '/notme');
-    expect(result).to.not.be.undefined;
-    expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
-
-    result = proxy.resolve('somesite.example.com', '/notme/somewhere');
-    expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
-
-    result = proxy.resolve('somesite.example.com', '/itsme/somewhere');
-    expect(result).to.be.undefined;
-
-
-    proxy.close();
+        return proxy.resolve('somesite.example.com', '/itsme/somewhere');
+      })
+      .then(function (result) {
+        expect(result).to.be.undefined;
+        proxy.close();
+      });
   });
 
 });

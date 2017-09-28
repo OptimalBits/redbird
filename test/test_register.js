@@ -2,6 +2,7 @@
 
 var Redbird = require('../');
 var expect = require('chai').expect;
+var Promise = require('bluebird');
 
 var opts = {
 	bunyan: false /* {
@@ -22,19 +23,26 @@ describe("Route registration", function () {
 
 		expect(redbird.routing).to.have.property("example.com")
 
-		expect(redbird.resolve('example.com')).to.be.an("object");
+		return redbird.resolve('example.com').then(function (result) {
+			expect(result).to.be.an("object");
 
-		var host = redbird.routing["example.com"];
-		expect(host).to.be.an("array");
-		expect(host[0]).to.have.property('path')
-		expect(host[0].path).to.be.eql('/');
-		expect(host[0].urls).to.be.an('array');
-		expect(host[0].urls.length).to.be.eql(1);
-		expect(host[0].urls[0].href).to.be.eql('http://192.168.1.2:8080/');
+			var host = redbird.routing["example.com"];
+			expect(host).to.be.an("array");
+			expect(host[0]).to.have.property('path')
+			expect(host[0].path).to.be.eql('/');
+			expect(host[0].urls).to.be.an('array');
+			expect(host[0].urls.length).to.be.eql(1);
+			expect(host[0].urls[0].href).to.be.eql('http://192.168.1.2:8080/');
 
-		redbird.unregister('example.com', '192.168.1.2:8080');
-		expect(redbird.resolve('example.com')).to.be.an("undefined")
-		redbird.close();
+			redbird.unregister('example.com', '192.168.1.2:8080');
+
+			return redbird.resolve('example.com');
+			
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
+			redbird.close();
+		});
 	});
 
 	it("should resolve domains as case insensitive", function () {
@@ -44,11 +52,12 @@ describe("Route registration", function () {
 
 		redbird.register('example.com', '192.168.1.2:8080');
 
-		var target = redbird.resolve('Example.com');
-		expect(target).to.be.an("object");
-		expect(target.urls[0].hostname).to.be.equal('192.168.1.2');
-
-		redbird.close();
+		return redbird.resolve('Example.com').then(function (target) {
+			expect(target).to.be.an("object");
+			expect(target.urls[0].hostname).to.be.equal('192.168.1.2');
+	
+			redbird.close();
+		});
 	});
 
 
@@ -92,22 +101,36 @@ describe("Route registration", function () {
 		expect(host[0].urls[0].href).to.be.eql('http://192.168.1.6:8084/');
 
 		redbird.unregister('example1.com');
-		expect(redbird.resolve('example1.com')).to.be.an("undefined")
 
-		redbird.unregister('example2.com');
-		expect(redbird.resolve('example2.com')).to.be.an("undefined")
+		return redbird.resolve('example1.com').then(function (result) {
+			expect(result).to.be.an("undefined")
 
-		redbird.unregister('example3.com');
-		expect(redbird.resolve('example3.com')).to.be.an("undefined")
+			redbird.unregister('example2.com');
+			return redbird.resolve('example2.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
 
-		redbird.unregister('example4.com');
-		expect(redbird.resolve('example4.com')).to.be.an("undefined")
+			redbird.unregister('example3.com');
+			return redbird.resolve('example3.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
 
-		redbird.unregister('example5.com');
-		expect(redbird.resolve('example5.com')).to.be.an("undefined")
+			redbird.unregister('example4.com');
+			return redbird.resolve('example4.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
 
+			redbird.unregister('example5.com');
+			return redbird.resolve('example5.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
+			redbird.close();
+		})
 
-		redbird.close();
 	})
 	it("should register several pathnames within a route", function () {
 		var redbird = Redbird(opts);
@@ -134,14 +157,21 @@ describe("Route registration", function () {
 		expect(host[2].path.length).to.be.least(host[3].path.length)
 
 		redbird.unregister('example.com');
-		expect(redbird.resolve('example.com')).to.be.an("undefined")
+		return redbird.resolve('example.com').then(function (result) {
+			expect(result).to.be.an("undefined")
+			return redbird.resolve('example.com', '/foo');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("object")
 
-		expect(redbird.resolve('example.com', '/foo')).to.be.an("object")
-
-		redbird.unregister('example.com/foo');
-		expect(redbird.resolve('example.com', '/foo')).to.be.an("undefined")
-
-		redbird.close();
+			redbird.unregister('example.com/foo');
+			return redbird.resolve('example.com', '/foo');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
+			
+			redbird.close();
+		});
 	})
 	it("shouldnt crash process in unregister of unregisted host", function (done) {
 		var redbird = Redbird(opts);
@@ -166,12 +196,13 @@ describe("Route resolution", function () {
 		redbird.register('example.com/bar', '192.168.1.4:8080');
 		redbird.register('example.com/foo/baz', '192.168.1.3:8080');
 
-		var route = redbird.resolve('example.com', '/foo/asd/1/2');
-		expect(route.path).to.be.eql('/foo')
-		expect(route.urls.length).to.be.eql(1);
-		expect(route.urls[0].href).to.be.eql('http://192.168.1.3:8080/');
-
-		redbird.close();
+		return redbird.resolve('example.com', '/foo/asd/1/2').then(function (route) {
+			expect(route.path).to.be.eql('/foo')
+			expect(route.urls.length).to.be.eql(1);
+			expect(route.urls[0].href).to.be.eql('http://192.168.1.3:8080/');
+	
+			redbird.close();
+		});
 	})
 
 	it("should resolve to a correct route with complex path", function () {
@@ -185,13 +216,13 @@ describe("Route resolution", function () {
 		redbird.register('example.com/bar', '192.168.1.4:8080');
 		redbird.register('example.com/foo/baz', '192.168.1.7:8080');
 
-		var route = redbird.resolve('example.com', '/foo/baz/a/b/c');
-
-		expect(route.path).to.be.eql('/foo/baz')
-		expect(route.urls.length).to.be.eql(1);
-		expect(route.urls[0].href).to.be.eql('http://192.168.1.7:8080/');
-
-		redbird.close();
+		return redbird.resolve('example.com', '/foo/baz/a/b/c').then(function (route) {
+			expect(route.path).to.be.eql('/foo/baz')
+			expect(route.urls.length).to.be.eql(1);
+			expect(route.urls[0].href).to.be.eql('http://192.168.1.7:8080/');
+	
+			redbird.close();
+		});
 	})
 
 	it("should resolve to undefined if route not available", function () {
@@ -205,13 +236,16 @@ describe("Route resolution", function () {
 		redbird.register('foobar.com/bar', '192.168.1.4:8080');
 		redbird.register('foobar.com/foo/baz', '192.168.1.3:8080');
 
-		var route = redbird.resolve('wrong.com');
-		expect(route).to.be.an('undefined')
+		return redbird.resolve('wrong.com').then(function (route) {
+			expect(route).to.be.an('undefined')
 
-		var route = redbird.resolve('foobar.com');
-		expect(route).to.be.an('undefined')
+			return redbird.resolve('foobar.com');
+		})
+		.then(function (route) {
+			expect(route).to.be.an('undefined')
 
-		redbird.close();
+			redbird.close();
+		});
 	})
 
 	it("should get a target if route available", function () {
@@ -224,24 +258,32 @@ describe("Route resolution", function () {
 		redbird.register('example.com/foo', '192.168.1.3:8080');
 		redbird.register('foobar.com/bar', '192.168.1.4:8080');
 		redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
-    redbird.register('foobar.com/media', '192.168.1.7:8080');
+		redbird.register('foobar.com/media', '192.168.1.7:8080');
 
-		var route = redbird.resolve('example.com', '/qux/a/b/c');
-		expect(route.path).to.be.eql('/');
+		return redbird.resolve('example.com', '/qux/a/b/c').then(function (route) {
+			expect(route.path).to.be.eql('/');
 
-    var route = redbird.resolve('foobar.com', '/medias/');
-		expect(route).to.be.undefined;
+			return redbird.resolve('foobar.com', '/medias/');
+		})
+		.then(function (route) {
+			expect(route).to.be.undefined;
 
-    var route = redbird.resolve('foobar.com', '/mediasa');
-		expect(route).to.be.undefined;
+			return redbird.resolve('foobar.com', '/mediasa');
+		})
+		.then(function (route) {
+			expect(route).to.be.undefined;
+			return redbird.resolve('foobar.com', '/media/sa');
+		})
+		.then(function (route) {
+			expect(route.path).to.be.eql('/media');
 
-    var route = redbird.resolve('foobar.com', '/media/sa');
-		expect(route.path).to.be.eql('/media');
+			return redbird._getTarget('example.com', { url: '/foo/baz/a/b/c' });
+		})
+		.then(function (target) {
+			expect(target.href).to.be.eql('http://192.168.1.3:8080/')
 
-		var target = redbird._getTarget('example.com', { url: '/foo/baz/a/b/c' });
-		expect(target.href).to.be.eql('http://192.168.1.3:8080/')
-
-		redbird.close();
+			redbird.close();
+		});
 	})
 
 	it("should get a target with path when necessary", function () {
@@ -255,15 +297,18 @@ describe("Route resolution", function () {
 		redbird.register('foobar.com/bar', '192.168.1.4:8080');
 		redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
 
-		var route = redbird.resolve('example.com', '/qux/a/b/c');
-		expect(route.path).to.be.eql('/');
-
 		var req = { url: '/foo/baz/a/b/c' }
-		var target = redbird._getTarget('example.com', req);
-		expect(target.href).to.be.eql('http://192.168.1.3:8080/a/b')
-		expect(req.url).to.be.eql('/a/b/baz/a/b/c')
-
-		redbird.close();
+		return redbird.resolve('example.com', '/qux/a/b/c').then(function (route) {
+			expect(route.path).to.be.eql('/');
+			
+			return redbird._getTarget('example.com', req);
+		})
+		.then(function (target) {
+			expect(target.href).to.be.eql('http://192.168.1.3:8080/a/b')
+			expect(req.url).to.be.eql('/a/b/baz/a/b/c')
+	
+			redbird.close();
+		});
 	})
 })
 
@@ -290,12 +335,18 @@ describe("TLS/SSL", function () {
 		expect(redbird.certs['example.com']).to.be.an("object");
 
 		redbird.unregister('example.com', '192.168.1.1:8080');
-		expect(redbird.resolve('example.com')).to.not.be.an("undefined")
-		expect(redbird.certs['example.com']).to.not.be.an("undefined");
 
-		redbird.unregister('example.com', '192.168.1.2:8080');
-		expect(redbird.resolve('example.com')).to.be.an("undefined")
-		expect(redbird.certs['example.com']).to.be.an("undefined");
+		return redbird.resolve('example.com').then(function (result) {
+			expect(result).to.not.be.an("undefined")
+			expect(redbird.certs['example.com']).to.not.be.an("undefined");
+			redbird.unregister('example.com', '192.168.1.2:8080');
+
+			return redbird.resolve('example.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
+			expect(redbird.certs['example.com']).to.be.an("undefined");
+		});
 
 	})
 	it('Should bind https servers to different ip addresses', function(testDone) {
@@ -382,40 +433,61 @@ describe("Load balancing", function () {
 		expect(redbird.routing['example.com'][0].urls.length).to.be.eql(4);
 		expect(redbird.routing['example.com'][0].rr).to.be.eql(0);
 
-		var route = redbird.resolve('example.com', '/foo/qux/a/b/c');
-		expect(route.urls.length).to.be.eql(4);
+		
+		return redbird.resolve('example.com', '/foo/qux/a/b/c').then(function (route) {
+			expect(route.urls.length).to.be.eql(4);
 
-		for (var i = 0; i < 1000; i++) {
-	    	var target = redbird._getTarget('example.com', { url: '/a/b/c' });
-			expect(target.href).to.be.eql('http://192.168.1.1:8080/')
-			expect(redbird.routing['example.com'][0].rr).to.be.eql(1);
+			return Promise.each(Array(1000).fill(null), function () {
+				return redbird._getTarget('example.com', { url: '/a/b/c' }).then(function (target) {
+					expect(target.href).to.be.eql('http://192.168.1.1:8080/')
+					expect(redbird.routing['example.com'][0].rr).to.be.eql(1);
 
-			var target = redbird._getTarget('example.com', { url: '/x/y' });
-			expect(target.href).to.be.eql('http://192.168.1.2:8080/')
-			expect(redbird.routing['example.com'][0].rr).to.be.eql(2);
+					return redbird._getTarget('example.com', { url: '/x/y' });
+				})
+				.then(function (target) {
+					expect(target.href).to.be.eql('http://192.168.1.2:8080/')
+					expect(redbird.routing['example.com'][0].rr).to.be.eql(2);
 
-			var target = redbird._getTarget('example.com', { url: '/j' });
-			expect(target.href).to.be.eql('http://192.168.1.3:8080/')
-			expect(redbird.routing['example.com'][0].rr).to.be.eql(3);
+					return redbird._getTarget('example.com', { url: '/j' });
+				})
+				.then(function (target) {
+					expect(target.href).to.be.eql('http://192.168.1.3:8080/')
+					expect(redbird.routing['example.com'][0].rr).to.be.eql(3);
 
-			var target = redbird._getTarget('example.com', { url: '/k/' });
-			expect(target.href).to.be.eql('http://192.168.1.4:8080/')
-			expect(redbird.routing['example.com'][0].rr).to.be.eql(0);
-		}
+					return redbird._getTarget('example.com', { url: '/k/' });
+				})
+				.then(function (target) {
+					expect(target.href).to.be.eql('http://192.168.1.4:8080/')
+					expect(redbird.routing['example.com'][0].rr).to.be.eql(0);
+				});
+			});
+		})
+		.then(function () {
+			redbird.unregister('example.com', '192.168.1.1:8080');
+			return redbird.resolve('example.com');
+		})
+		.then(function (result) {
+			expect(result).to.not.be.an("undefined")
 
-		redbird.unregister('example.com', '192.168.1.1:8080');
-		expect(redbird.resolve('example.com')).to.not.be.an("undefined")
+			redbird.unregister('example.com', '192.168.1.2:8080');
+			return redbird.resolve('example.com');
+		})
+		.then(function (result) {
+			expect(result).to.not.be.an("undefined")
+			redbird.unregister('example.com', '192.168.1.3:8080');
 
-		redbird.unregister('example.com', '192.168.1.2:8080');
-		expect(redbird.resolve('example.com')).to.not.be.an("undefined")
+			return redbird.resolve('example.com');
+		})
+		.then(function (result) {
+			expect(result).to.not.be.an("undefined")
+			redbird.unregister('example.com', '192.168.1.4:8080');
 
-		redbird.unregister('example.com', '192.168.1.3:8080');
-		expect(redbird.resolve('example.com')).to.not.be.an("undefined")
+			return redbird.resolve('example.com');
+		})
+		.then(function (result) {
+			expect(result).to.be.an("undefined")
 
-		redbird.unregister('example.com', '192.168.1.4:8080');
-		expect(redbird.resolve('example.com')).to.be.an("undefined")
-
-
-		redbird.close();
+			redbird.close();
+		})
 	});
 });
