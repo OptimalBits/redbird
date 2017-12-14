@@ -398,6 +398,26 @@ setTimeout(function() {
   proxy.removeResolver(topPriority);
 }, 600000);
 ```
+### Modify Request body
+
+bodyChange options parameter let you modify the incoming req.body. An example is below:
+
+```javascript
+ // for every URL path that starts with /api/, send request to upstream API service
+ var bodyChange = function(bodyOrigin) {
+   return new Promise(function(resolve, reject) {
+     bodyOrigin.modify = true;
+     delete bodyOrigin.xxx;
+   });
+ };
+
+
+ var proxy = new require('redbird')({
+    port: 8080,
+    bodyChange: bodyChange
+ })
+
+```
 
 ## Replacing the default HTTP/HTTPS server modules
 
