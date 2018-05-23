@@ -451,6 +451,8 @@ var proxy = require('redbird')(opts);
 [register](#register)
 [unregister](#unregister)
 [notFound](#notFound)
+[onRequest](#onRequest)
+[onResponse](#onResponse)
 [close](#close)
 
 <a name="redbird"/>
@@ -555,6 +557,43 @@ __Arguments__
 ```
 
 ---------------------------------------
+
+<a name="onRequest"/>
+#### Redbird##onRequest(callback)
+
+ Gives Redbird a callback function with four parameters, the proxy, the HTTP request/response and options objects, respectively, which will be called when a proxy route is executed. The default is
+```javascript
+    function (proxy, request, response, options) { }
+```
+.
+
+__Arguments__
+
+```javascript
+    src {Function(proxy, request, response, options)} The callback which will be
+      called before the proxy redirects the request to the target
+```
+
+---------------------------------------
+
+<a name="onResponse"/>
+#### Redbird##onResponse(callback)
+
+ Gives Redbird a callback function with one parameter, the HTTP response object, respectively, which will be called when a proxy route was executed. The default is
+```javascript
+    function (response) { }
+```
+.
+
+__Arguments__
+
+```javascript
+    src {Function(response)} The callback which will be
+      called after the proxy server received a response from the target server 
+```
+
+---------------------------------------
+
 
 <a name="close"/>
 
