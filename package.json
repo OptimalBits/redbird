@@ -34,6 +34,7 @@
     "lru-cache": "^4.0.1",
     "node-etcd": "^4.2.1",
     "object-hash": "^1.1.2",
+    "proxy-addr": "^2.0.3",
     "safetimeout": "^0.1.1",
     "spdy": "^3.4.0",
     "valid-url": "^1.0.9"
