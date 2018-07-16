@@ -178,7 +178,7 @@ describe("Custom Resolver", function(){
         return proxy.resolve('mysite.example.com', '/ignore');
       })
       .then(function (result) {
-        expect(result).to.be.undefined;
+        expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
 
         // make custom resolver low priority and test.
         // result should match default resolver
