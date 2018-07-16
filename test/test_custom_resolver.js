@@ -228,30 +228,49 @@ describe("Custom Resolver", function(){
   });
   it("Should resolve array properly as expected", function () {
 
-    var proxy = new Redbird(opts), resolver = function (host, url) {
-      return url.match(/\/ignore/i) ? null : 'http://172.12.0.1/home'
-    }, customResolver = function (host, url) {
+    var proxy = new Redbird(opts);
+
+    var firstResolver = function (host, url) {
+      if (url.endsWith('/first-resolver')) {
+        return 'http://first-resolver/';
+      }
+    };
+    firstResolver.priority = 2;
+
+    var secondResolver = function (host, url) {
       return new Promise(function(resolve, reject) {
-        setTimeout(function(){
-          var r;
-          r = url.match(/\/array/i) ? 'http://172.12.0.2/array' : 'http://172.12.0.1/home';
-          resolve(r);
-        },500);
+        if (url.endsWith('/second-resolver')) {
+          resolve('http://second-resolver/');
+        } else {
+          resolve(null);
+        }
       });
-    }, result;
+    };
+    secondResolver.priority = 1;
 
+    proxy.resolvers = []; // remove the defaultResolver
+    proxy.addResolver(firstResolver);
+    proxy.addResolver(secondResolver);
 
+    const cases = [
+      proxy.resolve('mysite.example.com', '/first-resolver')
+      .then(function(result) {
+        expect(result.urls.length).to.be.above(0);
+        expect(result.urls[0].hostname).to.be.eq('first-resolver');
+      }),
+      proxy.resolve('mysite.example.com', '/second-resolver')
+      .then(function(result) {
+        expect(result.urls.length).to.be.above(0);
+        expect(result.urls[0].hostname).to.be.eq('second-resolver');
+      })
+    ];
 
-    proxy.register('mysite.example.com', 'http://127.0.0.1:9999');
-    proxy.addResolver(resolver);
-    proxy.addResolver(customResolver);
-    // must match the resolver
-    return proxy.resolve('randomsite.example.com', '/array')
-          .then(function(result) {
-            expect(result.urls.length).to.be.above(0);
-            expect(result.urls[0].hostname).to.be.eq('172.12.0.2');
-            return proxy.resolve('randomsite.example.com', '/anywhere')
-            proxy.close();
-          });
+    return Promise.all(cases).then(
+      () => proxy.close(),
+      err => {
+        proxy.close();
+        throw err;
+      }
+    );
   });
 });
