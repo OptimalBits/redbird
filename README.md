@@ -351,7 +351,7 @@ Resolvers can be defined when initializing the proxy object with the `resolvers`
 
 ```javascript
  // for every URL path that starts with /api/, send request to upstream API service
- var customResolver1 = function(host, url, req) {
+ var customResolver1 = function(host, url) {
    if(/^\/api\//.test(url)){
       return 'http://127.0.0.1:8888';
    }
