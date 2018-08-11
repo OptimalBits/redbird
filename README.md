@@ -472,6 +472,7 @@ __Arguments__
     		key: keyPath,
     		cert: certPath,
     		ca: caPath // Optional.
+        	redirectPort: port, // optional https port number to be redirected if entering using http.
             http2: false, //Optional, setting to true enables http2/spdy support
             serverModule : require('https') // Optional, override the https server module used to listen for https or http2 connections.  Default is require('https') or require('spdy')
     	}
@@ -503,7 +504,6 @@ __Arguments__
     examples:
     {ssl : true} // Will use default ssl certificates.
     {ssl: {
-        redirectPort: port, // optional https port number to be redirected if entering using http.
         redirect: true, // False to disable HTTPS autoredirect to this route.
     	key: keyPath,
     	cert: certPath,
