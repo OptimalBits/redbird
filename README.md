@@ -421,13 +421,13 @@ proxy_opts = {strict: false};
 proxyWrap = require('findhit-proxywrap');
 var opts = {
     port: process.env.HTTP_PORT,
-    serverModule = proxyWrap.proxy( require('http'), proxy_opts),
+    serverModule: proxyWrap.proxy( require('http'), proxy_opts),
     ssl: {
         //Do this if you want http2:
         http2: true,        
-        serverModule = proxyWrap.proxy(require('spdy').server, proxy_opts),
+        serverModule: proxyWrap.proxy(require('spdy').server, proxy_opts),
         //Do this if you only want regular https
-        // serverModule = proxyWrap.proxy( require('http'), proxy_opts), 
+        // serverModule: proxyWrap.proxy( require('http'), proxy_opts), 
         port: process.env.HTTPS_PORT,
     }
 }
