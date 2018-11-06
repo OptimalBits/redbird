@@ -1,14 +1,13 @@
 # Redbird Reverse Proxy
 
-## With built in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
+## With built-in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
 
 
 ![redbird](http://cliparts.co/cliparts/6cr/o9d/6cro9dRzi.jpg)
 
-Handling dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption should be
-easy and robust.
+It should be easy and robust to handle dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption.
 
-With redbird you get a complete library to build dynamic reverse proxies with the speed and robustness of http-proxy.
+With Redbird you get a complete library to build dynamic reverse proxies with the speed and robustness of http-proxy.
 
 This light-weight package includes everything you need for easy reverse routing of your applications.
 Great for routing many applications from different domains in one single host, handling SSL with ease, etc.
