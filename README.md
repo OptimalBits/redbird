@@ -35,7 +35,7 @@ TLS protected services that just works.
 - Automatic HTTP to HTTPS redirects
 - Automatic TLS Certificates generation and renewal
 - Load balancer
-- Register and unregister routes programatically without restart (allows zero downtime deployments)
+- Register and unregister routes programmatically without restart (allows zero downtime deployments)
 - Docker support for automatic registration of running containers
 - Cluster support that enables automatic multi-process
 - Based on top of rock-solid node-http-proxy and battle tested on production in many sites
