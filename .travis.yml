@@ -2,5 +2,20 @@ language: node_js
 
 node_js:
   - 'node'
+  - '10'
+  - '9'
   - '8'
+  - '7'
   - '6'
+
+before_install:
+  - npm cache clean --force
+
+install:
+  - npm install --update-binary --no-shrinkwrap
+
+script:
+  - npm test
+
+cache:
+  npm: false
