@@ -1,15 +1,15 @@
 var spdy = require('spdy'),
-    fs = require('fs'),
-    path = require('path');
+  fs = require('fs'),
+  path = require('path');
 
 var options = {
   // Private key
   //key: fs.readFileSync(path.join(__dirname, "certs/dev-key.pem")),
-	//cert: fs.readFileSync(path.join(__dirname, "certs/dev-cert.pem")),
+  //cert: fs.readFileSync(path.join(__dirname, "certs/dev-cert.pem")),
 
   // **optional** SPDY-specific options
   spdy: {
-    protocols: [ 'h2', 'spdy/3.1', 'http/1.1' ],
+    protocols: ['h2', 'spdy/3.1', 'http/1.1'],
     plain: false,
 
     // **optional**

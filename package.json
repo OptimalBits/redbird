@@ -4,7 +4,9 @@
   "description": "A reverse proxy with support for dynamic tables",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/* --reporter spec"
+    "test": "mocha test/* --reporter spec",
+    "lint": "eslint lib test hl-tests index.js",
+    "format": "prettier --single-quote --write \"{lib,test,hl-tests}/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -24,7 +26,7 @@
   "homepage": "https://github.com/OptimalBits/redbird",
   "dependencies": {
     "bluebird": "^3.5.3",
-    "bunyan": "^1.8.1",
+    "bunyan": "^1.8.12",
     "dolphin": "*",
     "http-proxy": "^1.17.0",
     "le-challenge-fs": "^2.0.4",
@@ -40,8 +42,9 @@
   },
   "devDependencies": {
     "chai": "^1.9.1",
-    "gulp": "^3.8.11",
-    "gulp-eslint": "^0.9.0",
-    "mocha": "^2.5.3"
+    "eslint": "^5.15.3",
+    "eslint-config-prettier": "^4.1.0",
+    "mocha": "^3.5.3",
+    "prettier": "^1.16.4"
   }
 }
