@@ -1,30 +1,36 @@
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "Launch",
-			"type": "node",
-			"request": "launch",
-			"program": "hl-tests/paths.js",
-			"stopOnEntry": false,
-			"args": [],
-			"cwd": ".",
-			"runtimeExecutable": null,
-			"runtimeArgs": [
-				"--nolazy"
-			],
-			"env": {
-				"NODE_ENV": "development"
-			},
-			"externalConsole": false,
-			"sourceMaps": false,
-			"outDir": null
-		},
-		{
-			"name": "Attach",
-			"type": "node",
-			"request": "attach",
-			"port": 5858
-		}
-	]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Mocha Tests",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-u", "tdd", "--timeout", "999999", "--colors", "${workspaceFolder}/test"],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Launch",
+      "type": "node",
+      "request": "launch",
+      "program": "hl-tests/paths.js",
+      "stopOnEntry": false,
+      "args": [],
+      "cwd": ".",
+      "runtimeExecutable": null,
+      "runtimeArgs": ["--nolazy"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "externalConsole": false,
+      "sourceMaps": false,
+      "outDir": null
+    },
+    {
+      "name": "Attach",
+      "type": "node",
+      "request": "attach",
+      "port": 5858
+    }
+  ]
 }

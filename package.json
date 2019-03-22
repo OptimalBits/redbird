@@ -46,6 +46,8 @@
     "eslint": "^5.15.3",
     "eslint-config-prettier": "^4.1.0",
     "mocha": "^3.5.3",
-    "prettier": "^1.16.4"
+    "needle": "^2.2.4",
+    "prettier": "^1.16.4",
+    "run-verify": "^1.0.2"
   }
 }
