@@ -219,15 +219,13 @@ describe('Route resolution', function() {
     redbird.register('example.com/bar', '192.168.1.4:8080');
     redbird.register('example.com/foo/baz', '192.168.1.7:8080');
 
-    return redbird
-      .resolve('example.com', '/foo/baz/a/b/c')
-      .then(function(route) {
-        expect(route.path).to.be.eql('/foo/baz');
-        expect(route.urls.length).to.be.eql(1);
-        expect(route.urls[0].href).to.be.eql('http://192.168.1.7:8080/');
+    return redbird.resolve('example.com', '/foo/baz/a/b/c').then(function(route) {
+      expect(route.path).to.be.eql('/foo/baz');
+      expect(route.urls.length).to.be.eql(1);
+      expect(route.urls[0].href).to.be.eql('http://192.168.1.7:8080/');
 
-        redbird.close();
-      });
+      redbird.close();
+    });
   });
 
   it('should resolve to undefined if route not available', function() {

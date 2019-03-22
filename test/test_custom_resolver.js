@@ -96,9 +96,7 @@ describe('Custom Resolver', function() {
 
     var testRoute = { urls: [], path: '/' };
     var testRouteResult = builder(testRoute);
-    expect(testRouteResult, 'For route in the default format').to.be.eq(
-      testRoute
-    );
+    expect(testRouteResult, 'For route in the default format').to.be.eq(testRoute);
     expect(testRouteResult.isResolved).to.be.undefined;
 
     // case string:
@@ -240,18 +238,14 @@ describe('Custom Resolver', function() {
     proxy.addResolver(secondResolver);
 
     const cases = [
-      proxy
-        .resolve('mysite.example.com', '/first-resolver')
-        .then(function(result) {
-          expect(result.urls.length).to.be.above(0);
-          expect(result.urls[0].hostname).to.be.eq('first-resolver');
-        }),
-      proxy
-        .resolve('mysite.example.com', '/second-resolver')
-        .then(function(result) {
-          expect(result.urls.length).to.be.above(0);
-          expect(result.urls[0].hostname).to.be.eq('second-resolver');
-        })
+      proxy.resolve('mysite.example.com', '/first-resolver').then(function(result) {
+        expect(result.urls.length).to.be.above(0);
+        expect(result.urls[0].hostname).to.be.eq('first-resolver');
+      }),
+      proxy.resolve('mysite.example.com', '/second-resolver').then(function(result) {
+        expect(result.urls.length).to.be.above(0);
+        expect(result.urls[0].hostname).to.be.eq('second-resolver');
+      })
     ];
 
     return Promise.all(cases).then(

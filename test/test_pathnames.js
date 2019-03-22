@@ -43,10 +43,7 @@ describe('Target with pathnames', function() {
 
     expect(redbird.routing).to.be.an('object');
 
-    redbird.register(
-      '127.0.0.1/path',
-      '127.0.0.1:' + TEST_PORT + '/foo/bar/qux'
-    );
+    redbird.register('127.0.0.1/path', '127.0.0.1:' + TEST_PORT + '/foo/bar/qux');
 
     expect(redbird.routing).to.have.property('127.0.0.1');
 
@@ -54,10 +51,7 @@ describe('Target with pathnames', function() {
       expect(req.url).to.be.eql('/foo/bar/qux/a/b/c');
     });
 
-    http.get('http://127.0.0.1:' + PROXY_PORT + '/path/a/b/c', function(
-      err,
-      res
-    ) {
+    http.get('http://127.0.0.1:' + PROXY_PORT + '/path/a/b/c', function(err, res) {
       redbird.close();
       done();
     });
