@@ -511,6 +511,10 @@ __Arguments__
     	ca: caPath // optional
     	}
     }
+    {onRequest: (req, res, target) => {
+      // called before forwarding is occurred, you can modify req.headers for example
+      // return undefined to forward to default target
+    }}
 ```
 
 ---------------------------------------
