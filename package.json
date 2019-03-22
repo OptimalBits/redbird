@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "chai": "^1.9.1",
+    "electrode-server": "^2.2.2",
     "eslint": "^5.15.3",
     "eslint-config-prettier": "^4.1.0",
     "mocha": "^3.5.3",
