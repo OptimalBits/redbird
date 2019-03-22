@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/OptimalBits/redbird",
   "dependencies": {
-    "bluebird": "^3.5.3",
+    "bluebird": "^2.11.0 || ^3.5.3",
     "bunyan": "^1.8.12",
     "dolphin": "*",
     "http-proxy": "^1.17.0",
