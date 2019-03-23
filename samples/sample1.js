@@ -12,15 +12,15 @@ async function sample1() {
 
   server.route({
     method: 'get',
-    path: '/test/',
+    path: '/test',
     handler: (req, h) => {
       return 'hello world';
     }
   });
 
   proxy.register({
-    src: '/x',
-    target: 'localhost:8080/test',
+    src: 'localhost/x',
+    target: 'http://localhost:3000/test',
     onRequest: (req, res, target) => {}
   });
 }
