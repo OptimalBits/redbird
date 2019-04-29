@@ -508,10 +508,14 @@ __Arguments__
         redirect: true, // False to disable HTTPS autoredirect to this route.
     	key: keyPath,
     	cert: certPath,
-    	ca: caPath // optional
+    	ca: caPath, // optional
+    	secureOptions: constants.SSL_OP_NO_TLSv1 //optional, see below 
     	}
     }
 ```
+> _Note: if you need to use **ssl.secureOptions**, to disable older, insecure TLS versions, import crypto/constants first:_
+
+> `const { constants } = require('crypto')`
 
 ---------------------------------------
 
