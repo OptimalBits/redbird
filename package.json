@@ -4,7 +4,7 @@
   "description": "A reverse proxy with support for dynamic tables",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/* --reporter spec"
+    "test": "mocha test/* --bail --exit --reporter spec"
   },
   "repository": {
     "type": "git",
