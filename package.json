@@ -10,6 +10,10 @@
     "type": "git",
     "url": "git://github.com/OptimalBits/redbird.git"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "keywords": [
     "proxy",
     "reverse",
@@ -23,7 +27,7 @@
   },
   "homepage": "https://github.com/OptimalBits/redbird",
   "dependencies": {
-    "bluebird": "^3.7.2",
+    "bluebird": "^2.11.0 || ^3.7.2",
     "dolphin": "*",
     "greenlock": "^2.8.8",
     "http-proxy": "^1.18.0",
@@ -40,8 +44,11 @@
   },
   "devDependencies": {
     "chai": "^1.9.1",
+    "electrode-server": "^2.2.2",
     "gulp": "^3.8.11",
     "gulp-eslint": "^0.9.0",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "needle": "^2.2.4",
+    "run-verify": "^1.2.2"
   }
 }
