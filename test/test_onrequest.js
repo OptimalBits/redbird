@@ -63,7 +63,7 @@ describe('onRequest hook', function() {
         });
       },
       runFinally(() => proxy && proxy.close()),
-      runFinally(() => proxy && server.stop())
+      runFinally(() => server && server.stop())
     );
   });
 });
