@@ -62,8 +62,8 @@ describe('onRequest hook', function() {
           return target;
         });
       },
-      runFinally(() => proxy.close()),
-      runFinally(() => server.stop())
+      runFinally(() => proxy && proxy.close()),
+      runFinally(() => proxy && server.stop())
     );
   });
 });
