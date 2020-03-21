@@ -10,6 +10,10 @@
     "type": "git",
     "url": "git://github.com/OptimalBits/redbird.git"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "keywords": [
     "proxy",
     "reverse",
@@ -40,6 +44,7 @@
   },
   "devDependencies": {
     "chai": "^1.9.1",
+    "electrode-server": "^2.2.2",
     "gulp": "^3.8.11",
     "gulp-eslint": "^0.9.0",
     "mocha": "^2.5.3"
