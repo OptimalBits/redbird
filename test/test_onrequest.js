@@ -6,13 +6,13 @@ const electrodeServer = require('electrode-server');
 const needle = require('needle');
 const { expect } = require('chai');
 
-describe('onRequest hook', function() {
+describe('onRequest hook', function () {
   function setupTestRoute(handler) {
-    return electrodeServer().then(server => {
+    return electrodeServer().then((server) => {
       server.route({
         method: 'get',
         path: '/test',
-        handler
+        handler,
       });
       return server;
     });
@@ -27,12 +27,12 @@ describe('onRequest hook', function() {
 
     return asyncVerify(
       () => {
-        return setupTestRoute(req => {
+        return setupTestRoute((req) => {
           serverReq = req;
           return 'hello test';
         });
       },
-      s => {
+      (s) => {
         server = s;
         let target;
         proxy = redbird({ bunyan: false, port: 18999 });
@@ -45,13 +45,13 @@ describe('onRequest hook', function() {
             req.headers.foo = 'bar';
             delete req.headers.blah;
             target = tgt;
-          }
+          },
         });
         return needle('get', 'http://localhost:18999/x', {
           headers: {
-            blah: 'xyz'
-          }
-        }).then(r => {
+            blah: 'xyz',
+          },
+        }).then((r) => {
           expect(r.statusCode).to.equal(200);
           expect(target).to.exist;
           expect(saveProxyHeaders).to.exist;

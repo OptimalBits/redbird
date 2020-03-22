@@ -1,15 +1,15 @@
 var spdy = require('spdy'),
-    fs = require('fs'),
-    path = require('path');
+  fs = require('fs'),
+  path = require('path');
 
 var options = {
   // Private key
   //key: fs.readFileSync(path.join(__dirname, "certs/dev-key.pem")),
-	//cert: fs.readFileSync(path.join(__dirname, "certs/dev-cert.pem")),
+  //cert: fs.readFileSync(path.join(__dirname, "certs/dev-cert.pem")),
 
   // **optional** SPDY-specific options
   spdy: {
-    protocols: [ 'h2', 'spdy/3.1', 'http/1.1' ],
+    protocols: ['h2', 'spdy/3.1', 'http/1.1'],
     plain: false,
 
     // **optional**
@@ -23,12 +23,12 @@ var options = {
       windowSize: 1024 * 1024, // Server's window size
 
       // **optional** if true - server will send 3.1 frames on 3.0 *plain* spdy
-      autoSpdy31: false
-    }
-  }
+      autoSpdy31: false,
+    },
+  },
 };
 
-var server = spdy.createServer(options, function(req, res) {
+var server = spdy.createServer(options, function (req, res) {
   res.writeHead(200);
   res.end('hello world!');
 });
