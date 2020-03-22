@@ -8,13 +8,13 @@ var proxy = new require('../../index.js')({
     port: 9999
   },
   */
- // bunyan: true,
+  // bunyan: true,
   port: 8080,
   secure: true,
   // http2: true,
   // cluster: 8
   ssl: { port: 4443 },
-})
+});
 
 /*
 proxy.register("caturra.exactbytes.com", "127.0.0.1:3000", {
@@ -24,13 +24,12 @@ proxy.register("caturra.exactbytes.com", "127.0.0.1:3000", {
   }
 });
 */
-proxy.register("localhost", "127.0.0.1:3000", {
+proxy.register('localhost', '127.0.0.1:3000', {
   ssl: {
-    key: path.join(__dirname, "certs/dev-key.pem"),
-		cert: path.join(__dirname, "certs/dev-cert.pem"),
-  }
+    key: path.join(__dirname, 'certs/dev-key.pem'),
+    cert: path.join(__dirname, 'certs/dev-cert.pem'),
+  },
 });
-
 
 // proxy.register("localhost", "127.0.0.1:3000");
 
@@ -63,11 +62,13 @@ http.createServer(function(req, res){
 */
 
 var size = 32;
-console.log("SIZE:", size);
-var randomstring = require("randomstring");
+console.log('SIZE:', size);
+var randomstring = require('randomstring');
 var msg = randomstring.generate(size);
-http.createServer(function(req, res){
-  res.writeHead(200);
-  res.write(msg);
-  res.end();
-}).listen(3000);
+http
+  .createServer(function (req, res) {
+    res.writeHead(200);
+    res.write(msg);
+    res.end();
+  })
+  .listen(3000);

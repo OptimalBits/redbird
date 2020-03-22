@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var Promise = require('bluebird');
 var Redbird = require('../');
@@ -6,8 +6,8 @@ var expect = require('chai').expect;
 var _ = require('lodash');
 
 var opts = {
-	bunyan: false,
-  port: 10000 + Math.ceil(Math.random() * 55535)
+  bunyan: false,
+  port: 10000 + Math.ceil(Math.random() * 55535),
   /* {
 		name: 'test',
 		streams: [{
@@ -16,11 +16,8 @@ var opts = {
 	} */
 };
 
-
-describe("Custom Resolver", function(){
-
-  it("Should contain one resolver by default", function () {
-
+describe('Custom Resolver', function () {
+  it('Should contain one resolver by default', function () {
     var redbird = Redbird(opts);
     expect(redbird.resolvers).to.be.an('array');
     expect(redbird.resolvers.length).to.be.eq(1);
@@ -29,24 +26,26 @@ describe("Custom Resolver", function(){
     redbird.close();
   });
 
-	it("Should register resolver with right priority", function(){
+  it('Should register resolver with right priority', function () {
     var resolver = function () {
       return 'http://127.0.0.1:8080';
     };
 
     resolver.priority = 1;
 
-    var options = _.extend({
-      resolvers: resolver
-    }, opts);
+    var options = _.extend(
+      {
+        resolvers: resolver,
+      },
+      opts
+    );
 
-		var redbird = Redbird(options);
+    var redbird = Redbird(options);
 
     expect(redbird.resolvers.length).to.be.eq(2);
     expect(redbird.resolvers[0]).to.be.eql(resolver);
 
-		redbird.close();
-
+    redbird.close();
 
     // test when an array is sent in as resolvers.
     options.resolvers = [resolver];
@@ -61,19 +60,14 @@ describe("Custom Resolver", function(){
     expect(redbird.resolvers[1]).to.be.eql(resolver);
     redbird.close();
 
-
     // test when invalid resolver is added
     options.resolvers = {};
     expect(function () {
-       new Redbird(options)
+      new Redbird(options);
     }).to.throw(Error);
-
-
   });
 
-
   it('Should add and remove resolver after launch', function () {
-
     var resolver = function () {};
     resolver.priority = 1;
 
@@ -85,18 +79,14 @@ describe("Custom Resolver", function(){
     redbird.addResolver(resolver);
     expect(redbird.resolvers.length, 'Only allows uniques.').to.be.eq(2);
 
-
     redbird.removeResolver(resolver);
     expect(redbird.resolvers.length).to.be.eq(1);
     expect(redbird.resolvers[0]).to.be.eq(redbird._defaultResolver);
 
     redbird.close();
-
   });
 
-
   it('Should properly convert and cache route to routeObject', function () {
-
     var builder = Redbird.buildRoute;
 
     // invalid input
@@ -104,11 +94,10 @@ describe("Custom Resolver", function(){
     expect(builder([])).to.be.null;
     expect(builder(2016)).to.be.null;
 
-    var testRoute = {urls: [], path: '/'};
+    var testRoute = { urls: [], path: '/' };
     var testRouteResult = builder(testRoute);
     expect(testRouteResult, 'For route in the default format').to.be.eq(testRoute);
     expect(testRouteResult.isResolved).to.be.undefined;
-
 
     // case string:
     var testString = 'http://127.0.0.1:8888';
@@ -119,14 +108,13 @@ describe("Custom Resolver", function(){
     expect(result.urls[0].hostname).to.be.eq('127.0.0.1');
     expect(result.isResolved).to.be.true;
 
-
     var result2 = builder(testString);
     expect(result2).to.be.eq(result);
 
     // case with object
 
-     var testObject_1= {path:'/api', url: 'http://127.0.0.1'},
-       testObjectResult_1 = builder(testObject_1);
+    var testObject_1 = { path: '/api', url: 'http://127.0.0.1' },
+      testObjectResult_1 = builder(testObject_1);
 
     expect(testObjectResult_1.path).to.be.eq('/api');
     expect(testObjectResult_1.urls).to.be.an('array');
@@ -134,35 +122,33 @@ describe("Custom Resolver", function(){
     expect(testObjectResult_1.urls[0].hostname).to.be.eq('127.0.0.1');
     expect(testObjectResult_1.isResolved).to.be.true;
 
-
     // test object caching.
     var testObjectResult_2 = builder(testObject_1);
     expect(testObjectResult_1).to.be.eq(testObjectResult_2);
 
-    var testObject_2= {url: ['http://127.0.0.1', 'http://123.1.1.1']}
-    var testResult2  = builder(testObject_2);
+    var testObject_2 = { url: ['http://127.0.0.1', 'http://123.1.1.1'] };
+    var testResult2 = builder(testObject_2);
     expect(testResult2.urls).to.not.be.undefined;
     expect(testResult2.urls.length).to.be.eq(testObject_2.url.length);
     expect(testResult2.urls[0].hostname).to.be.eq('127.0.0.1');
     expect(testResult2.urls[1].hostname).to.be.eq('123.1.1.1');
-
-
-
   });
 
-  it("Should resolve properly as expected", function () {
-
-    var proxy = new Redbird(opts), resolver = function (host, url) {
-      return url.match(/\/ignore/i) ? null : 'http://172.12.0.1/home'
-    }, result;
+  it('Should resolve properly as expected', function () {
+    var proxy = new Redbird(opts),
+      resolver = function (host, url) {
+        return url.match(/\/ignore/i) ? null : 'http://172.12.0.1/home';
+      },
+      result;
 
     resolver.priority = 1;
 
     proxy.register('mysite.example.com', 'http://127.0.0.1:9999');
     proxy.addResolver(resolver);
     // must match the resolver
-    return proxy.resolve('randomsite.example.com', '/anywhere')
-    .then(function (result) {
+    return proxy
+      .resolve('randomsite.example.com', '/anywhere')
+      .then(function (result) {
         expect(result).to.not.be.null;
         expect(result).to.not.be.undefined;
         expect(result.urls.length).to.be.above(0);
@@ -173,7 +159,7 @@ describe("Custom Resolver", function(){
       })
       .then(function (result) {
         expect(result.urls[0].hostname).to.be.eq('172.12.0.1');
-        
+
         // use default resolver, as custom resolver should ignore input.
         return proxy.resolve('mysite.example.com', '/ignore');
       })
@@ -202,8 +188,8 @@ describe("Custom Resolver", function(){
         resolver = function () {
           return {
             path: '/notme',
-            url: 'http://172.12.0.1/home'
-          }
+            url: 'http://172.12.0.1/home',
+          };
         };
         resolver.priority = 1;
         proxy.addResolver(resolver);
@@ -226,8 +212,7 @@ describe("Custom Resolver", function(){
         proxy.close();
       });
   });
-  it("Should resolve array properly as expected", function () {
-
+  it('Should resolve array properly as expected', function () {
     var proxy = new Redbird(opts);
 
     var firstResolver = function (host, url) {
@@ -238,7 +223,7 @@ describe("Custom Resolver", function(){
     firstResolver.priority = 2;
 
     var secondResolver = function (host, url) {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         if (url.endsWith('/second-resolver')) {
           resolve('http://second-resolver/');
         } else {
@@ -253,21 +238,19 @@ describe("Custom Resolver", function(){
     proxy.addResolver(secondResolver);
 
     const cases = [
-      proxy.resolve('mysite.example.com', '/first-resolver')
-      .then(function(result) {
+      proxy.resolve('mysite.example.com', '/first-resolver').then(function (result) {
         expect(result.urls.length).to.be.above(0);
         expect(result.urls[0].hostname).to.be.eq('first-resolver');
       }),
-      proxy.resolve('mysite.example.com', '/second-resolver')
-      .then(function(result) {
+      proxy.resolve('mysite.example.com', '/second-resolver').then(function (result) {
         expect(result.urls.length).to.be.above(0);
         expect(result.urls[0].hostname).to.be.eq('second-resolver');
-      })
+      }),
     ];
 
     return Promise.all(cases).then(
       () => proxy.close(),
-      err => {
+      (err) => {
         proxy.close();
         throw err;
       }
