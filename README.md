@@ -83,6 +83,9 @@ proxy.register("balance.me", "http://172.17.41.6:8080");
 proxy.register("balance.me", "http://172.17.42.6:8080");
 proxy.register("balance.me", "http://172.17.43.6:8080");
 
+// You can unregister routes as well
+proxy.register("temporary.com", "http://172.17.45.1:8004");
+proxy.unregister("temporary.com", "http://172.17.45.1:8004");
 
 // LetsEncrypt support
 // With Redbird you can get zero conf and automatic SSL certificates for your domains
