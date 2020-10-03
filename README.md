@@ -89,7 +89,7 @@ proxy.unregister("temporary.com", "http://172.17.45.1:8004");
 
 // LetsEncrypt support
 // With Redbird you can get zero conf and automatic SSL certificates for your domains
-redbird.register('example.com', 'http://172.60.80.2:8082', {
+proxy.register('example.com', 'http://172.60.80.2:8082', {
   ssl: {
     letsencrypt: {
       email: 'john@example.com', // Domain owner/admin email
