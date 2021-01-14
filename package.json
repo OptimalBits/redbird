@@ -29,10 +29,11 @@
   "homepage": "https://github.com/OptimalBits/redbird",
   "dependencies": {
     "@greenlock/manager": "^3.1.0",
+    "@root/greenlock": "^4.0.5",
     "acme-http-01-webroot": "^3.0.0",
     "bluebird": "^3.7.2",
     "dolphin": "latest",
-    "@root/greenlock": "^4.0.5",
+    "find-root": "^1.1.0",
     "greenlock-store-fs": "^3.2.2",
     "http-proxy": "^1.18.1",
     "lodash": "^4.17.20",
