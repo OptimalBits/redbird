@@ -35,17 +35,28 @@ describe('onRequest hook', function () {
       (s) => {
         server = s;
         let target;
-        proxy = redbird({ bunyan: false, port: 18999 });
+        const onRequest = (req, res, tgt) => {
+          proxyReq = req;
+          saveProxyHeaders = Object.assign({}, req.headers);
+          req.headers.foo = 'bar';
+          delete req.headers.blah;
+          target = tgt;
+        };
+        proxy = redbird({
+          bunyan: false,
+          port: 18999,
+          resolvers: [
+            () => ({
+              url: [ 'http://localhost:3000/test' ],
+              path: '/x',
+              opts: { onRequest }
+            })
+          ]
+        });
         proxy.register({
           src: 'localhost/x',
           target: 'http://localhost:3000/test',
-          onRequest: (req, res, tgt) => {
-            proxyReq = req;
-            saveProxyHeaders = Object.assign({}, req.headers);
-            req.headers.foo = 'bar';
-            delete req.headers.blah;
-            target = tgt;
-          },
+          onRequest
         });
         return needle('get', 'http://localhost:18999/x', {
           headers: {
