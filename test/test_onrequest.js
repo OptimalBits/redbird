@@ -77,4 +77,48 @@ describe('onRequest hook', function () {
       runFinally(() => server && server.stop())
     );
   });
+
+  it('should be able to send custom responses', () => {
+    let server;
+    let proxy;
+
+    return asyncVerify(
+      () => {
+        return setupTestRoute((req) => {
+          return 'hello test';
+        });
+      },
+      (s) => {
+        server = s;
+        const onRequest = (req, res, tgt) => {
+          res.setHeader('Location', 'https://google.com')
+          res.statusCode = 302
+          return res
+        };
+        proxy = redbird({
+          bunyan: false,
+          port: 18999,
+          resolvers: [
+            () => ({
+              url: [ '0.0.0.0' ],
+              path: '/x',
+              opts: { onRequest }
+            })
+          ]
+        });
+        proxy.register({
+          src: 'localhost/x',
+          target: 'http://localhost:3000/test',
+          onRequest
+        });
+        return needle('get', 'http://localhost:18999/x').then((r) => {
+          expect(r.statusCode).to.equal(302);
+          expect(r.headers.location).to.equal('https://google.com');
+          return r;
+        });
+      },
+      runFinally(() => proxy && proxy.close()),
+      runFinally(() => server && server.stop())
+    );
+  });
 });
