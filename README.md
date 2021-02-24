@@ -517,6 +517,7 @@ __Arguments__
     }
     {onRequest: (req, res, target) => {
       // called before forwarding is occurred, you can modify req.headers for example
+      // return the res object to send custom responses (e.g. redirects)
       // return undefined to forward to default target
     }}
 ```
