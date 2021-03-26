@@ -34,7 +34,7 @@ proxy.register('localhost', '127.0.0.1:3000', {
 // proxy.register("localhost", "127.0.0.1:3000");
 
 var http = require('http');
-var keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: 1000 });
+// var keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: 1000 });
 // http.globalAgent = keepAliveAgent;
 
 /*
