@@ -33,7 +33,7 @@
     "greenlock": "^2.8.8",
     "http-proxy": "^1.18.0",
     "le-challenge-fs": "^2.0.9",
-    "le-store-certbot": "^2.2.3",
+    "le-store-fs": "^1.0.3",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",
     "node-etcd": "^7.0.0",
