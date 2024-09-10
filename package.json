@@ -28,9 +28,8 @@
   },
   "homepage": "https://github.com/OptimalBits/redbird",
   "dependencies": {
-    "bluebird": "^2.11.0 || ^3.7.2",
     "dolphin": "*",
-    "greenlock": "^2.8.8",
+    "greenlock": "^2.8.9",
     "http-proxy": "^1.18.0",
     "le-challenge-fs": "^2.0.9",
     "le-store-certbot": "^2.2.3",
@@ -38,9 +37,9 @@
     "lru-cache": "^5.1.1",
     "node-etcd": "^7.0.0",
     "object-hash": "^1.3.1",
-    "pino": "^5.15.0",
+    "pino": "^9.4.0",
     "safetimeout": "^0.1.2",
-    "spdy": "^4.0.1",
+    "spdy": "^4.0.2",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
