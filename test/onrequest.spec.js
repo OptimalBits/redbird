@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { Redbird } from '../'; // Adjust the import path if necessary
 import { expect } from 'chai';
+import fetch from 'node-fetch';
 
 const { asyncVerify, runFinally } = require('run-verify');
 const electrodeServer = require('electrode-server');
