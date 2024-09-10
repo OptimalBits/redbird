@@ -1,5 +1,5 @@
 /*eslint-env node */
 'use strict';
-module.exports = require('./lib/proxy');
-module.exports.docker = require('./lib/docker');
-module.exports.etcd = require('./lib/etcd-backend');
+export * from "./lib/docker.mjs"
+export * from "./lib/etcd-backend.mjs"
+export * from "./lib/proxy.mjs"

@@ -1,10 +1,10 @@
 'use strict';
 
-var Redbird = require('../');
-var expect = require('chai').expect;
-var Promise = require('bluebird');
+import { describe, it, expect } from 'vitest';
+import { Redbird } from '../'; // Adjust the import path if necessary
+import { expect } from 'chai';
 
-var opts = {
+const opts = {
   bunyan: false /* {
 		name: 'test',
 		streams: [{
@@ -15,7 +15,7 @@ var opts = {
 
 describe('Route registration', function () {
   it('should register a simple route', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -28,7 +28,7 @@ describe('Route registration', function () {
       .then(function (result) {
         expect(result).to.be.an('object');
 
-        var host = redbird.routing['example.com'];
+        const host = redbird.routing['example.com'];
         expect(host).to.be.an('array');
         expect(host[0]).to.have.property('path');
         expect(host[0].path).to.be.eql('/');
@@ -47,7 +47,7 @@ describe('Route registration', function () {
   });
 
   it('should resolve domains as case insensitive', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -62,7 +62,7 @@ describe('Route registration', function () {
   });
 
   it('should register multiple routes', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -78,7 +78,7 @@ describe('Route registration', function () {
     expect(redbird.routing).to.have.property('example4.com');
     expect(redbird.routing).to.have.property('example5.com');
 
-    var host;
+    let host;
 
     host = redbird.routing['example1.com'];
     expect(host[0].path).to.be.eql('/');
@@ -134,7 +134,7 @@ describe('Route registration', function () {
       });
   });
   it('should register several pathnames within a route', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -145,7 +145,7 @@ describe('Route registration', function () {
 
     expect(redbird.routing).to.have.property('example.com');
 
-    var host = redbird.routing['example.com'];
+    const host = redbird.routing['example.com'];
     expect(host).to.be.an('array');
     expect(host[0]).to.have.property('path');
     expect(host[0].path).to.be.eql('/qux/baz');
@@ -176,12 +176,10 @@ describe('Route registration', function () {
         redbird.close();
       });
   });
-  it('shouldnt crash process in unregister of unregisted host', function (done) {
-    var redbird = Redbird(opts);
+  it('shouldnt crash process in unregister of unregisted host', function () {
+    const redbird = Redbird(opts);
 
     redbird.unregister('example.com');
-
-    done();
 
     redbird.close();
   });
@@ -189,7 +187,7 @@ describe('Route registration', function () {
 
 describe('Route resolution', function () {
   it('should resolve to a correct route', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -209,7 +207,7 @@ describe('Route resolution', function () {
   });
 
   it('should resolve to a correct route with complex path', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -229,7 +227,7 @@ describe('Route resolution', function () {
   });
 
   it('should resolve to undefined if route not available', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -254,7 +252,7 @@ describe('Route resolution', function () {
   });
 
   it('should get a target if route available', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -294,7 +292,7 @@ describe('Route resolution', function () {
   });
 
   it('should get a target with path when necessary', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -304,7 +302,7 @@ describe('Route resolution', function () {
     redbird.register('foobar.com/bar', '192.168.1.4:8080');
     redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
 
-    var req = { url: '/foo/baz/a/b/c' };
+    const req = { url: '/foo/baz/a/b/c' };
     return redbird
       .resolve('example.com', '/qux/a/b/c')
       .then(function (route) {
@@ -323,7 +321,7 @@ describe('Route resolution', function () {
 
 describe('TLS/SSL', function () {
   it('should allow TLS/SSL certificates', function () {
-    var redbird = Redbird({
+    const redbird = Redbird({
       ssl: {
         port: 4430,
       },
@@ -359,26 +357,32 @@ describe('TLS/SSL', function () {
         expect(redbird.certs['example.com']).to.be.an('undefined');
       });
   });
-  it('Should bind https servers to different ip addresses', function (testDone) {
-    var isPortTaken = function (port, ip, done) {
-      var net = require('net');
-      var tester = net
-        .createServer()
-        .once('error', function (err) {
-          if (err.code != 'EADDRINUSE') return done(err);
-          done(null, true);
-        })
-        .once('listening', function () {
-          tester
-            .once('close', function () {
-              done(null, false);
-            })
-            .close();
-        })
-        .listen(port, ip);
+  it('Should bind https servers to different ip addresses', function () {
+    const isPortTaken = function (port, ip) {
+      return new Promise(function (resolve, reject) {
+        const net = require('net');
+        const tester = net
+          .createServer()
+          .once('error', function (err) {
+            if (err.code != 'EADDRINUSE') {
+              return reject(err);
+            }
+            resolve(true);
+            //done(null, true);
+          })
+          .once('listening', function () {
+            tester
+              .once('close', function () {
+                resolve(false);
+                //done(null, false);
+              })
+              .close();
+          })
+          .listen(port, ip);
+      });
     };
 
-    var redbird = Redbird({
+    const redbird = Redbird({
       bunyan: false,
       port: 8080,
 
@@ -408,8 +412,8 @@ describe('TLS/SSL', function () {
       },
     });
 
-    var portsTaken = 0;
-    var portsChecked = 0;
+    const portsTaken = 0;
+    const portsChecked = 0;
 
     function portsTakenDone(err, taken) {
       portsChecked++;
@@ -437,7 +441,7 @@ describe('TLS/SSL', function () {
 
 describe('Load balancing', function () {
   it('should load balance between several targets', function () {
-    var redbird = Redbird(opts);
+    const redbird = Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -454,7 +458,7 @@ describe('Load balancing', function () {
       .then(function (route) {
         expect(route.urls.length).to.be.eql(4);
 
-        return Promise.each(Array(1000).fill(null), function () {
+        return Promise.all(Array(1000).fill(null), function () {
           return redbird
             ._getTarget('example.com', { url: '/a/b/c' })
             .then(function (target) {

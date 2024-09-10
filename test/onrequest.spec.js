@@ -1,10 +1,11 @@
 'use strict';
 
-const redbird = require('..');
+import { describe, it, expect } from 'vitest';
+import { Redbird } from '../'; // Adjust the import path if necessary
+import { expect } from 'chai';
+
 const { asyncVerify, runFinally } = require('run-verify');
 const electrodeServer = require('electrode-server');
-const needle = require('needle');
-const { expect } = require('chai');
 
 describe('onRequest hook', function () {
   function setupTestRoute(handler) {
@@ -35,7 +36,7 @@ describe('onRequest hook', function () {
       (s) => {
         server = s;
         let target;
-        proxy = redbird({ bunyan: false, port: 18999 });
+        proxy = Redbird({ bunyan: false, port: 18999 });
         proxy.register({
           src: 'localhost/x',
           target: 'http://localhost:3000/test',
@@ -47,12 +48,13 @@ describe('onRequest hook', function () {
             target = tgt;
           },
         });
-        return needle('get', 'http://localhost:18999/x', {
+
+        return fetch('http://localhost:18999/x', {
           headers: {
             blah: 'xyz',
           },
-        }).then((r) => {
-          expect(r.statusCode).to.equal(200);
+        }).then((res) => {
+          expect(res.status).to.equal(200);
           expect(target).to.exist;
           expect(saveProxyHeaders).to.exist;
           expect(saveProxyHeaders.blah).to.equal('xyz');
