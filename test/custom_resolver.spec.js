@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Redbird } from '../'; // Adjust the import path if necessary
 import { expect } from 'chai';
-// import _ from 'lodash';
 
 const opts = {
   bunyan: false,

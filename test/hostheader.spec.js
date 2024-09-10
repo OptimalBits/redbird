@@ -3,7 +3,8 @@
 import { describe, it, expect } from 'vitest';
 import { Redbird } from '../'; // Adjust the import path if necessary
 import { expect } from 'chai';
-import { createServer } from 'http';
+import { createServer } from 'http';
+import fetch from 'node-fetch';
 
 const TEST_PORT = 54674;
 const PROXY_PORT = 53433;
@@ -97,7 +98,7 @@ describe('Target with a hostname', function () {
 
       expect(res.status).to.be.eql(502);
     } catch (e) {
-      expect(e.cause.code).to.be.eql('ECONNRESET');
+      expect(e.code).to.be.eql('ECONNRESET');
     } finally {
       await redbird.close();
     }
