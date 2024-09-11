@@ -20,7 +20,7 @@ const opts = {
 
 describe('Target with pathnames', function () {
   it('Should be proxyed to target with pathname and source pathname concatenated', function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 

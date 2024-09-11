@@ -17,7 +17,7 @@ describe('onRequest hook', function () {
     const promiseServer = testServer();
 
     let target;
-    proxy = Redbird({ bunyan: false, port: 18999 });
+    proxy = new Redbird({ bunyan: false, port: 18999 });
     proxy.register({
       src: 'localhost/x',
       target: `http://localhost:${TEST_PORT}/test`,

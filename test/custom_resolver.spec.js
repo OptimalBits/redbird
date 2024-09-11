@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Redbird } from '../index.mjs'; // Adjust the import path if necessary
+import { Redbird, buildRoute } from '../index.mjs'; // Adjust the import path if necessary
 import { expect } from 'chai';
 
 const opts = {
@@ -61,7 +61,7 @@ describe('Custom Resolver', () => {
   });
 
   it('Should properly convert and cache route to routeObject', () => {
-    const builder = Redbird.buildRoute;
+    const builder = buildRoute;
 
     // Invalid input
     expect(builder(() => {})).toBeNull();
