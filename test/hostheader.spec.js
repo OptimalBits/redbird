@@ -16,7 +16,7 @@ const opts = {
 
 describe('Target with a hostname', function () {
   it('Should have the host header passed to the target', async function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -40,7 +40,7 @@ describe('Target with a hostname', function () {
   });
 
   it('Should not have the host header passed to the target', async function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -64,7 +64,7 @@ describe('Target with a hostname', function () {
   });
 
   it('Should return 404 after route is unregister', async function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -83,7 +83,7 @@ describe('Target with a hostname', function () {
   });
 
   it('Should return 502 after route with no backend', async function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
 
@@ -107,7 +107,7 @@ describe('Target with a hostname', function () {
 
 describe('Request with forwarded host header', function () {
   it('should prefer forwarded hostname if desired', function () {
-    const redbird = Redbird({
+    const redbird = new Redbird({
       bunyan: false,
       preferForwardedHost: true,
     });
@@ -122,7 +122,7 @@ describe('Request with forwarded host header', function () {
   });
 
   it('should use original host if not further specified', function () {
-    const redbird = Redbird(opts);
+    const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
     const req = { headers: { host: '127.0.0.1', 'x-forwarded-host': 'subdomain.example.com' } };
