@@ -49,7 +49,5 @@ http
     res.writeHead(200);
     res.write(req.url);
     res.end();
-
-    console.log(req.host);
   })
   .listen(3000);

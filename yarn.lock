@@ -1971,13 +1971,6 @@ lru-cache@2:
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-2.7.3.tgz"
   integrity sha1-bUUk6LlV+V1PW1iFHOId1y+06VI=
 
-lru-cache@^5.1.1:
-  version "5.1.1"
-  resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz"
-  integrity sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==
-  dependencies:
-    yallist "^3.0.2"
-
 magic-string@^0.30.10:
   version "0.30.11"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.30.11.tgz#301a6f93b3e8c2cb13ac1a7a673492c0dfd12954"
@@ -2124,7 +2117,7 @@ node-domexception@^1.0.0:
 
 node-etcd@^7.0.0:
   version "7.0.0"
-  resolved "https://registry.npmjs.org/node-etcd/-/node-etcd-7.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/node-etcd/-/node-etcd-7.0.0.tgz#87416d56d44104049822ca242e47d01728a34ed3"
   integrity sha512-kGnYVoxdDuUU2ojCt0GnZhR2wMRZWyJvq0OsWX+adExUbiX0z7D+8//nlv9Gnve1dIvNEQ/mvM+72aSKnWVp5Q==
   dependencies:
     deasync "^0.1.13"
@@ -3215,8 +3208,3 @@ xml-escape@~1.0.0:
   version "4.0.1"
   resolved "https://registry.npmjs.org/xtend/-/xtend-4.0.1.tgz"
   integrity sha1-pcbVMr5lbiPbgg77lDofBJmNY68=
-
-yallist@^3.0.2:
-  version "3.1.1"
-  resolved "https://registry.npmjs.org/yallist/-/yallist-3.1.1.tgz"
-  integrity sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==
