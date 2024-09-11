@@ -2,7 +2,7 @@
 
 import { createServer, get } from 'http';
 import { describe, it, expect } from 'vitest';
-import { Redbird } from '../'; // Adjust the import path if necessary
+import { Redbird } from '../index.mjs'; // Adjust the import path if necessary
 import { expect } from 'chai';
 
 const TEST_PORT = 54673;
