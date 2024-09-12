@@ -35,17 +35,18 @@ describe('onRequest hook', function () {
         blah: 'xyz',
       },
     });
+
     expect(res.status).to.equal(200);
     expect(target).to.exist;
     expect(saveProxyHeaders).to.exist;
     expect(saveProxyHeaders.blah).to.equal('xyz');
 
+    await proxy.close();
+
     const req = await promiseServer;
     expect(req).to.exist;
     expect(req.headers.foo).to.equal('bar');
     expect(req.headers.blah).to.equal(undefined);
-
-    await proxy.close();
   });
 });
 
