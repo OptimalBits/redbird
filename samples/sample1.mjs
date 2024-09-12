@@ -9,6 +9,7 @@ async function sample1() {
     port: 8080,
     bunyan: false,
     cluster: 4,
+    keepAlive: true,
   });
 
   proxy.register({
