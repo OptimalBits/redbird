@@ -1,9 +1,12 @@
 /**
- * Letsecript module for Redbird (c) Optimalbits 2016
+ * Letsecript module for Redbird (c) Optimalbits 2016-2024
  *
  *
  *
  */
+
+import { ClientRequest, IncomingMessage, Server, ServerResponse } from 'http';
+import pino from 'pino';
 
 /**
  *  LetsEncrypt certificates are stored like the following:
@@ -17,13 +20,13 @@
 let leStoreConfig = {};
 const webrootPath = ':configDir/:hostname/.well-known/acme-challenge';
 
-function init(certPath, port, logger) {
+function init(certPath: string, port: number, logger: pino.Logger<never, boolean>) {
   const http = require('http');
   const path = require('path');
   const url = require('url');
   const fs = require('fs');
 
-  logger && logger.info('Initializing letsencrypt, path %s, port: %s', certPath, port);
+  logger?.info('Initializing letsencrypt, path %s, port: %s', certPath, port);
 
   leStoreConfig = {
     configDir: certPath,
@@ -41,7 +44,7 @@ function init(certPath, port, logger) {
 
   // we need to proxy for example: 'example.com/.well-known/acme-challenge' -> 'localhost:port/example.com/'
   http
-    .createServer(function (req, res) {
+    .createServer(function (req: IncomingMessage, res: ServerResponse) {
       var uri = url.parse(req.url).pathname;
       var filename = path.join(certPath, uri);
       var isForbiddenPath = uri.length < 3 || filename.indexOf(certPath) !== 0;
@@ -55,7 +58,7 @@ function init(certPath, port, logger) {
 
       logger && logger.info('LetsEncrypt CA trying to validate challenge %s', filename);
 
-      fs.stat(filename, function (err, stats) {
+      fs.stat(filename, function (err: Error, stats: any) {
         if (err || !stats.isFile()) {
           res.writeHead(404, { 'Content-Type': 'text/plain' });
           res.write('404 Not Found\n');
@@ -78,9 +81,15 @@ function init(certPath, port, logger) {
  *  TODO: We should use something like https://github.com/PaquitoSoft/memored/blob/master/index.js
  *  to avoid
  */
-function getCertificates(domain, email, production, renew, logger) {
+function getCertificates(
+  domain: string,
+  email: string,
+  production: boolean,
+  renew: boolean,
+  logger: pino.Logger<never, boolean>
+) {
   const LE = require('greenlock');
-  var le;
+  let le;
 
   // Storage Backend
   var leStore = require('le-store-certbot').create(leStoreConfig);
@@ -99,14 +108,21 @@ function getCertificates(domain, email, production, renew, logger) {
     challenges: { 'http-01': leChallenge }, // handles /.well-known/acme-challege keys and tokens
     challengeType: 'http-01', // default to this challenge type
     debug: false,
-    log: function (debug) {
-      logger && logger.info(arguments, 'Lets encrypt debugger');
+    log: function () {
+      logger?.info(arguments, 'Lets encrypt debugger');
     },
   });
 
   // Check in-memory cache of certificates for the named domain
-  return le.check({ domains: [domain] }).then(function (cert) {
-    var opts = {
+  return le.check({ domains: [domain] }).then(function (cert: string) {
+    const opts: {
+      domains: string[];
+      email: string;
+      agreeTos: boolean;
+      rsaKeySize: number;
+      challengeType: string;
+      duplicate?: boolean;
+    } = {
       domains: [domain],
       email: email,
       agreeTos: true,
@@ -118,7 +134,7 @@ function getCertificates(domain, email, production, renew, logger) {
       if (renew) {
         logger && logger.info('renewing cert for ' + domain);
         opts.duplicate = true;
-        return le.renew(opts, cert).catch(function (err) {
+        return le.renew(opts, cert).catch(function (err: Error) {
           logger && logger.error(err, 'Error renewing certificates for ', domain);
         });
       } else {
@@ -127,15 +143,12 @@ function getCertificates(domain, email, production, renew, logger) {
       }
     } else {
       // Register Certificate manually
-      logger && logger.info('Manually registering certificate for %s', domain);
-      return le.register(opts).catch(function (err) {
-        logger && logger.error(err, 'Error registering LetsEncrypt certificates');
+      logger?.info('Manually registering certificate for %s', domain);
+      return le.register(opts).catch(function (err: Error) {
+        logger?.error(err, 'Error registering LetsEncrypt certificates');
       });
     }
   });
 }
-
-//module.exports.init = init;
-//module.exports.getCertificates = getCertificates;
 
 export { init, getCertificates };

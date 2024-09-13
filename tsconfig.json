@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "target": "ES2017",
+    "module": "NodeNext",
+    "incremental": true,
+    "declaration": true,
+    "outDir": "dist",
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": true,
+    "jsx": "preserve",
+    "importHelpers": true,
+    "esModuleInterop": false,
+    "strictNullChecks": false,
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["lib/*"]
+    },
+    "lib": ["esnext"]
+  },
+  "include": ["lib"],
+  "exclude": ["node_modules", "dist", "test/*"]
+}

@@ -1,13 +1,12 @@
 'use strict';
 
 import { createServer } from 'http';
-import { Redbird } from '../index.mjs';
-import cluster from 'cluster';
+import { Redbird } from '../dist/index.js';
+import { isPrimary } from 'cluster';
 
 async function sample1() {
   const proxy = new Redbird({
     port: 8080,
-    bunyan: false,
     cluster: 4,
     keepAlive: true,
   });
@@ -24,7 +23,7 @@ async function sample1() {
 
 sample1();
 
-if (!cluster.isPrimary) {
+if (!isPrimary) {
   createServer(function (req, res) {
     res.writeHead(200);
     res.write('hello world');

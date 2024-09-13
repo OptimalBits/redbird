@@ -1,10 +1,9 @@
 'use strict';
 
 import { describe, it, expect } from 'vitest';
-import { Redbird } from '../index.mjs'; // Adjust the import path if necessary
-import { expect } from 'chai';
+import { Redbird } from '../lib/index.js'; // Adjust the import path if necessary
 import fetch from 'node-fetch';
-import { createServer } from 'http';
+import { createServer, IncomingMessage } from 'http';
 
 const TEST_PORT = 3000;
 
@@ -17,7 +16,7 @@ describe('onRequest hook', function () {
     const promiseServer = testServer();
 
     let target;
-    proxy = new Redbird({ bunyan: false, port: 18999 });
+    proxy = new Redbird({ port: 18999 });
     proxy.register({
       src: 'localhost/x',
       target: `http://localhost:${TEST_PORT}/test`,
@@ -51,7 +50,7 @@ describe('onRequest hook', function () {
 });
 
 function testServer() {
-  return new Promise(function (resolve, reject) {
+  return new Promise<IncomingMessage>(function (resolve, reject) {
     const server = createServer(function (req, res) {
       res.write('');
       res.end();

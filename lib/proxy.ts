@@ -1,44 +1,69 @@
 /*eslint-env node */
 'use strict';
 
-import http from 'http';
-import httpProxy from 'http-proxy';
-import validUrl from 'valid-url';
-import { parse as parseUrl } from 'url';
+// Built-in NodeJS modules.
 import path from 'path';
-import _ from 'lodash';
-import pino from 'pino';
+import { URL, parse as parseUrl } from 'url';
 import cluster from 'cluster';
-import hash from 'object-hash';
-import safe from 'safetimeout';
-import * as letsencrypt from './letsencrypt.mjs';
-import { LRUCache } from 'lru-cache';
-
-const routeCache = new LRUCache({ max: 5000 });
-
+import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import fs from 'fs';
 import tls from 'tls';
 
+// Third party modules.
+import validUrl from 'valid-url';
+import httpProxy, { ServerOptions, ProxyTargetUrl } from 'http-proxy';
+import lodash from 'lodash';
+import { pino, Logger } from 'pino';
+import hash from 'object-hash';
+import safe from 'safe-timers';
+import { LRUCache } from 'lru-cache';
+
+// Custom modules.
+import * as letsencrypt from './letsencrypt.js';
+import { ProxyOptions, ResolverFn } from './interfaces/proxy-options.js';
+import { Socket } from 'net';
+import { ProxyRoute } from './interfaces/proxy-route.js';
+
+const { isFunction, isObject, sortBy, uniq, remove, isString } = lodash;
+
+const routeCache = new LRUCache({ max: 5000 });
+const defaultLetsencryptPort = 3000;
 const ONE_DAY = 60 * 60 * 24 * 1000;
 const ONE_MONTH = ONE_DAY * 30;
 
 export class Redbird {
-  constructor(opts) {
-    this.opts = opts = opts || {};
+  log?: Logger;
+  routing: any;
+  resolvers: ResolverFn[];
+  certs: any;
 
+  private _defaultResolver: any;
+  private proxy: httpProxy;
+  private agent: Agent;
+  private server: any;
+
+  private httpsServer: any;
+
+  private letsencryptHost: string;
+
+  get defaultResolver() {
+    return this._defaultResolver;
+  }
+
+  constructor(private opts: ProxyOptions = {}) {
     if (this.opts.httpProxy == undefined) {
       this.opts.httpProxy = {};
     }
 
-    let log;
-    if (opts.bunyan !== false) {
-      log = this.log = pino(
-        opts.bunyan || {
+    if (opts.log) {
+      this.log = pino(
+        opts.log || {
           name: 'redbird',
         }
       );
     }
 
-    this._defaultResolver = (host, url) => {
+    this._defaultResolver = (host: string, url: string) => {
       // Given a src resolve it to a target route if any available.
       if (!host) {
         return;
@@ -76,16 +101,15 @@ export class Redbird {
         cluster.fork();
       }
 
-      cluster.on('exit', function (worker, code, signal) {
+      cluster.on('exit', (worker, code, signal) => {
         // Fork if a worker dies.
-        log &&
-          log.error(
-            {
-              code: code,
-              signal: signal,
-            },
-            'worker died un-expectedly... restarting it.'
-          );
+        this.log?.error(
+          {
+            code: code,
+            signal: signal,
+          },
+          'worker died un-expectedly... restarting it.'
+        );
         cluster.fork();
       });
     } else {
@@ -94,21 +118,21 @@ export class Redbird {
       opts.port = opts.port || 8080;
 
       if (opts.letsencrypt) {
-        this.setupLetsencrypt(log, opts);
+        this.setupLetsencrypt(opts);
       }
 
       if (opts.resolvers) {
         this.addResolver(opts.resolvers);
       }
 
-      const websocketsUpgrade = async (req, socket, head) => {
-        socket.on('error', function (err) {
-          log && log.error(err, 'WebSockets error');
+      const websocketsUpgrade = async (req: any, socket: Socket, head: Buffer) => {
+        socket.on('error', (err) => {
+          this.log?.error(err, 'WebSockets error');
         });
-        const src = this._getSource(req);
-        const target = await this._getTarget(src, req);
+        const src = this.getSource(req);
+        const target = await this.getTarget(src, req);
 
-        log && log.info({ headers: req.headers, target: target }, 'upgrade to websockets');
+        this.log?.info({ headers: req.headers, target: target }, 'upgrade to websockets');
 
         if (target) {
           if (target.useTargetHostHeader === true) {
@@ -131,7 +155,7 @@ export class Redbird {
       let agent;
 
       if (opts.keepAlive) {
-        agent = this.agent = new http.Agent({
+        agent = this.agent = new Agent({
           keepAlive: true,
         });
       }
@@ -145,88 +169,109 @@ export class Redbird {
         agent,
       }));
 
-      proxy.on('proxyReq', function (p, req) {
-        if (req.host != null) {
-          p.setHeader('host', req.host);
+      proxy.on(
+        'proxyReq',
+        (
+          proxyReq: ClientRequest,
+          req: IncomingMessage,
+          res: ServerResponse,
+          options: ServerOptions
+        ) => {
+          // According to typescript this is the correct way to access the host header
+          // const host = req.headers.host;
+          const host = (<any>req)['host'] as string;
+          if (host != null) {
+            proxyReq.setHeader('host', host);
+          }
         }
-      });
+      );
 
       //
       // Support NTLM auth
       //
       if (opts.ntlm) {
-        proxy.on('proxyRes', function (proxyRes) {
-          const key = 'www-authenticate';
-          proxyRes.headers[key] = proxyRes.headers[key] && proxyRes.headers[key].split(',');
-        });
+        proxy.on(
+          'proxyRes',
+          (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
+            const key = 'www-authenticate';
+            (<any>proxyRes).headers[key] =
+              proxyRes.headers[key] && proxyRes.headers[key].split(',');
+          }
+        );
       }
 
       //
       // Optionally create an https proxy server.
       //
       if (opts.ssl) {
-        if (_.isArray(opts.ssl)) {
+        if (Array.isArray(opts.ssl)) {
           opts.ssl.forEach((sslOpts) => {
-            this.setupHttpsProxy(proxy, websocketsUpgrade, log, sslOpts);
+            this.setupHttpsProxy(proxy, websocketsUpgrade, sslOpts);
           });
         } else {
-          this.setupHttpsProxy(proxy, websocketsUpgrade, log, opts.ssl);
+          this.setupHttpsProxy(proxy, websocketsUpgrade, opts.ssl);
         }
       }
 
       //
       // Plain HTTP Proxy
       //
-      const server = (this.server = this.setupHttpProxy(proxy, websocketsUpgrade, log, opts));
-
+      const server = (this.server = this.setupHttpProxy(proxy, websocketsUpgrade, this.log, opts));
       server.listen(opts.port, opts.host);
 
-      if (opts.errorHandler && _.isFunction(opts.errorHandler)) {
+      const handleProxyError = (
+        err: NodeJS.ErrnoException,
+        req: IncomingMessage,
+        resOrSocket: ServerResponse | Socket,
+        target?: ProxyTargetUrl
+      ) => {
+        const res = resOrSocket instanceof ServerResponse ? resOrSocket : null;
+
+        //
+        // Send a 500 http status if headers have been sent
+        //
+        if (err.code === 'ECONNREFUSED') {
+          res.writeHead && res.writeHead(502);
+        } else if (!res.headersSent) {
+          res.writeHead && res.writeHead(500, err.message, { 'content-type': 'text/plain' });
+        }
+
+        //
+        // Do not log this common error
+        //
+        if (err.message !== 'socket hang up') {
+          this.log?.error(err, 'Proxy Error');
+        }
+
+        //
+        // TODO: if err.code=ECONNREFUSED and there are more servers
+        // for this route, try another one.
+        //
+        res.end(err.code);
+      };
+
+      if (opts.errorHandler && isFunction(opts.errorHandler)) {
         proxy.on('error', opts.errorHandler);
       } else {
         proxy.on('error', handleProxyError);
       }
 
-      log && log.info('Started a Redbird reverse proxy server on port %s', opts.port);
-    }
-
-    function handleProxyError(err, req, res) {
-      //
-      // Send a 500 http status if headers have been sent
-      //
-      if (err.code === 'ECONNREFUSED') {
-        res.writeHead && res.writeHead(502);
-      } else if (!res.headersSent) {
-        res.writeHead && res.writeHead(500, err.message, { 'content-type': 'text/plain' });
-      }
-
-      //
-      // Do not log this common error
-      //
-      if (err.message !== 'socket hang up') {
-        log && log.error(err, 'Proxy Error');
-      }
-
-      //
-      // TODO: if err.code=ECONNREFUSED and there are more servers
-      // for this route, try another one.
-      //
-      res.end(err.code);
+      this.log?.info('Started a Redbird reverse proxy server on port %s', opts.port);
     }
   }
 
-  setupHttpProxy(proxy, websocketsUpgrade, log, opts) {
+  setupHttpProxy(proxy: httpProxy, websocketsUpgrade: any, log: pino.Logger, opts: ProxyOptions) {
     const httpServerModule = opts.serverModule || http;
     const server = httpServerModule.createServer((req, res) => {
-      const src = this._getSource(req);
-      this._getTarget(src, req, res).then((target) => {
+      const src = this.getSource(req);
+      this.getTarget(src, req, res).then((target) => {
         if (target) {
-          if (shouldRedirectToHttps(this.certs, src, target, this)) {
-            redirectToHttps(req, res, target, opts.ssl, log);
+          if (this.shouldRedirectToHttps(this.certs, src, target)) {
+            redirectToHttps(req, res, opts.ssl, log);
           } else {
             proxy.web(req, res, {
               target: target,
-              secure: !proxy.options || proxy.options.secure !== false,
+              secure: !!opts.secure,
             });
           }
         } else {
@@ -248,17 +293,17 @@ export class Redbird {
     return server;
   }
 
-  setupLetsencrypt(log, opts) {
+  setupLetsencrypt(opts: ProxyOptions) {
     if (!opts.letsencrypt.path) {
       throw Error('Missing certificate path for Lets Encrypt');
     }
-    const letsencryptPort = opts.letsencrypt.port || 3000;
-    letsencrypt.init(opts.letsencrypt.path, letsencryptPort, log);
+    const letsencryptPort = opts.letsencrypt.port || defaultLetsencryptPort;
+    letsencrypt.init(opts.letsencrypt.path, letsencryptPort, this.log);
 
     opts.resolvers = opts.resolvers || [];
     this.letsencryptHost = '127.0.0.1:' + letsencryptPort;
     const targetHost = 'http://' + this.letsencryptHost;
-    const challengeResolver = function (host, url) {
+    const challengeResolver = (host: string, url: string) => {
       if (/^\/.well-known\/acme-challenge/.test(url)) {
         return targetHost + '/' + host;
       }
@@ -267,15 +312,20 @@ export class Redbird {
     this.addResolver(challengeResolver);
   }
 
-  setupHttpsProxy(proxy, websocketsUpgrade, log, sslOpts) {
+  setupHttpsProxy(proxy: httpProxy, websocketsUpgrade: any, sslOpts: any) {
     let https;
-
     this.certs = this.certs || {};
-
     const certs = this.certs;
 
-    let ssl = {
-      SNICallback: function (hostname, cb) {
+    let ssl: {
+      SNICallback: (hostname: string, cb: (err: any, ctx: any) => void) => void;
+      key: any;
+      cert: any;
+      secureOptions?: number;
+      ca?: any;
+      opts?: any;
+    } = {
+      SNICallback: function (hostname: string, cb: (err: any, ctx: any) => void) {
         if (cb) {
           cb(null, certs[hostname]);
         } else {
@@ -299,69 +349,75 @@ export class Redbird {
     }
 
     if (sslOpts.opts) {
-      ssl = _.defaults(ssl, sslOpts.opts);
+      ssl = { ...sslOpts.opts, ...ssl };
     }
 
     if (sslOpts.http2) {
       https = sslOpts.serverModule || require('spdy');
-      if (_.isObject(sslOpts.http2)) {
+      if (isObject(sslOpts.http2)) {
         sslOpts.spdy = sslOpts.http2;
       }
     } else {
       https = sslOpts.serverModule || require('https');
     }
 
-    const httpsServer = (this.httpsServer = https.createServer(ssl, async (req, res) => {
-      const src = this._getSource(req);
-      const httpProxyOpts = Object.assign({}, this.opts.httpProxy);
+    const httpsServer = (this.httpsServer = https.createServer(
+      ssl,
+      async (req: IncomingMessage, res: ServerResponse) => {
+        const src = this.getSource(req);
+        const httpProxyOpts = Object.assign({}, this.opts.httpProxy);
 
-      const target = await this._getTarget(src, req, res);
-      if (target) {
-        httpProxyOpts.target = target;
-        proxy.web(req, res, httpProxyOpts);
-      } else {
-        respondNotFound(req, res);
+        const target = await this.getTarget(src, req, res);
+        if (target) {
+          httpProxyOpts.target = target;
+          proxy.web(req, res, httpProxyOpts);
+        } else {
+          respondNotFound(req, res);
+        }
       }
-    }));
+    ));
 
     httpsServer.on('upgrade', websocketsUpgrade);
 
-    httpsServer.on('error', function (err) {
-      log && log.error(err, 'HTTPS Server Error');
+    httpsServer.on('error', (err: NodeJS.ErrnoException) => {
+      this.log?.error(err, 'HTTPS Server Error');
     });
 
-    httpsServer.on('clientError', function (err) {
-      log && log.error(err, 'HTTPS Client  Error');
+    httpsServer.on('clientError', (err: NodeJS.ErrnoException) => {
+      this.log?.error(err, 'HTTPS Client  Error');
     });
 
-    log && log.info('Listening to HTTPS requests on port %s', sslOpts.port);
+    this.log?.info('Listening to HTTPS requests on port %s', sslOpts.port);
     httpsServer.listen(sslOpts.port, sslOpts.ip);
   }
 
-  addResolver(resolver) {
-    if (this.opts.cluster && cluster.isMaster) return this;
-
-    if (!_.isArray(resolver)) {
-      resolver = [resolver];
+  addResolver(resolver: ResolverFn | ResolverFn[]) {
+    if (this.opts.cluster && cluster.isPrimary) {
+      return this;
     }
 
-    resolver.forEach((resolveObj) => {
-      if (!_.isFunction(resolveObj)) {
+    const resolverArray = Array.isArray(resolver) ? resolver : [resolver];
+
+    resolverArray.forEach((resolveObj) => {
+      if (!isFunction(resolveObj)) {
         throw new Error('Resolver must be an invokable function.');
       }
 
       if (!resolveObj.hasOwnProperty('priority')) {
-        resolveObj.priority = 0;
+        (<any>resolveObj).priority = 0;
       }
 
       this.resolvers.push(resolveObj);
     });
 
-    this.resolvers = _.sortBy(_.uniq(this.resolvers), ['priority']).reverse();
+    this.resolvers = sortBy(uniq(this.resolvers), ['priority']).reverse();
   }
 
-  removeResolver(resolver) {
-    if (this.opts.cluster && cluster.isMaster) return this;
+  removeResolver(resolver: ResolverFn) {
+    if (this.opts.cluster && cluster.isPrimary) {
+      return this;
+    }
+
     // since unique resolvers are not checked for performance,
     // just remove every existence.
     this.resolvers = this.resolvers.filter(function (resolverFn) {
@@ -378,8 +434,13 @@ export class Redbird {
  @target {String|URL} A string or a url parsed by node url module.
  @opts {Object} Route options.
  */
-  register(src, target, opts) {
-    if (this.opts.cluster && cluster.isMaster) return this;
+  register(opts: { src: string | URL; target: string | URL; ssl: any }): Redbird;
+  register(src: string, opts: any): Redbird;
+  register(src: string | URL, target: string | URL, opts: any): Redbird;
+  register(src: any, target?: any, opts?: any): Redbird {
+    if (this.opts.cluster && cluster.isPrimary) {
+      return this;
+    }
 
     // allow registering with src or target as an object to pass in
     // options specific to each one.
@@ -415,7 +476,7 @@ export class Redbird {
               console.error('Missing certificate path for Lets Encrypt');
               return;
             }
-            this.log && this.log.info('Getting Lets Encrypt certificates for %s', src.hostname);
+            this.log?.info('Getting Lets Encrypt certificates for %s', src.hostname);
             this.updateCertificates(
               src.hostname,
               ssl.letsencrypt.email,
@@ -433,7 +494,7 @@ export class Redbird {
 
     const host = (routing[src.hostname] = routing[src.hostname] || []);
     const pathname = src.pathname || '/';
-    let route = _.find(host, { path: pathname });
+    let route = host.find((route: { path: string }) => route.path === pathname);
 
     if (!route) {
       route = { path: pathname, rr: 0, urls: [], opts: Object.assign({}, opts) };
@@ -442,18 +503,24 @@ export class Redbird {
       //
       // Sort routes
       //
-      routing[src.hostname] = _.sortBy(host, function (_route) {
+      routing[src.hostname] = sortBy(host, function (_route) {
         return -_route.path.length;
       });
     }
 
     route.urls.push(target);
 
-    this.log && this.log.info({ from: src, to: target }, 'Registered a new route');
+    this.log?.info({ from: src, to: target }, 'Registered a new route');
     return this;
   }
 
-  async updateCertificates(domain, email, production, renewWithin, renew) {
+  async updateCertificates(
+    domain: string,
+    email: string,
+    production: boolean,
+    renewWithin: number,
+    renew?: boolean
+  ) {
     try {
       const certs = await letsencrypt.getCertificates(domain, email, production, renew, this.log);
       if (certs) {
@@ -470,11 +537,10 @@ export class Redbird {
         renewTime =
           renewTime > 0 ? renewTime : this.opts.letsencrypt.minRenewTime || 60 * 60 * 1000;
 
-        this.log &&
-          this.log.info('Renewal of %s in %s days', domain, Math.floor(renewTime / ONE_DAY));
+        this.log?.info('Renewal of %s in %s days', domain, Math.floor(renewTime / ONE_DAY));
 
         const renewCertificate = () => {
-          this.log && this.log.info('Renewing letscrypt certificates for %s', domain);
+          this.log?.info('Renewing letscrypt certificates for %s', domain);
           this.updateCertificates(domain, email, production, renewWithin, true);
         };
 
@@ -483,14 +549,14 @@ export class Redbird {
         //
         // TODO: Try again, but we need an exponential backof to avoid getting banned.
         //
-        this.log && this.log.info('Could not get any certs for %s', domain);
+        this.log?.info('Could not get any certs for %s', domain);
       }
     } catch (err) {
       console.error('Error getting LetsEncrypt certificates', err);
     }
   }
 
-  unregister(src, target) {
+  unregister(src: string | URL, target?: string | URL): Redbird {
     if (this.opts.cluster && cluster.isPrimary) {
       return this;
     }
@@ -499,9 +565,9 @@ export class Redbird {
       return this;
     }
 
-    src = prepareUrl(src);
-    const routes = this.routing[src.hostname] || [];
-    const pathname = src.pathname || '/';
+    const srcURL = prepareUrl(src);
+    const routes = this.routing[srcURL.hostname] || [];
+    const pathname = srcURL.pathname || '/';
     let i;
 
     for (i = 0; i < routes.length; i++) {
@@ -514,9 +580,9 @@ export class Redbird {
       const route = routes[i];
 
       if (target) {
-        target = prepareUrl(target);
-        _.remove(route.urls, function (url) {
-          return url.href === target.href;
+        const targetURL = prepareUrl(target);
+        remove(route.urls, (url: URL) => {
+          return url.href === targetURL.href;
         });
       } else {
         route.urls = [];
@@ -526,14 +592,14 @@ export class Redbird {
         routes.splice(i, 1);
         const certs = this.certs;
         if (certs) {
-          if (certs[src.hostname] && certs[src.hostname].renewalTimeout) {
-            safe.clearTimeout(certs[src.hostname].renewalTimeout);
+          if (certs[srcURL.hostname] && certs[srcURL.hostname].renewalTimeout) {
+            safe.clearTimeout(certs[srcURL.hostname].renewalTimeout);
           }
-          delete certs[src.hostname];
+          delete certs[srcURL.hostname];
         }
       }
 
-      this.log && this.log.info({ from: src, to: target }, 'Unregistered a route');
+      this.log?.info({ from: src, to: target }, 'Unregistered a route');
     }
     return this;
   }
@@ -544,8 +610,11 @@ export class Redbird {
    * @param url
    * @returns {*}
    */
-  resolve(host, url, req) {
-    let resolvedValue;
+  async resolve(
+    host: string,
+    url?: string,
+    req?: IncomingMessage
+  ): Promise<ProxyRoute | undefined> {
     const promiseArray = [];
 
     host = host && host.toLowerCase();
@@ -553,31 +622,36 @@ export class Redbird {
       promiseArray.push(this.resolvers[i].call(this, host, url, req));
     }
 
-    return Promise.all(promiseArray)
-      .then(function (resolverResults) {
-        for (let i = 0; i < resolverResults.length; i++) {
-          let route = resolverResults[i];
+    try {
+      const resolverResults = await Promise.all(promiseArray);
 
-          if (route && (route = buildRoute(route))) {
-            // ensure resolved route has path that prefixes URL
-            // no need to check for native routes.
-            if (!route.isResolved || route.path === '/' || startsWith(url, route.path)) {
-              return route;
-            }
+      for (let i = 0; i < resolverResults.length; i++) {
+        const route = resolverResults[i];
+        const builtRoute = route && buildRoute(route);
+
+        if (builtRoute) {
+          // ensure resolved route has path that prefixes URL
+          // no need to check for native routes.
+          if (
+            !builtRoute.isResolved ||
+            builtRoute.path === '/' ||
+            startsWith(url, builtRoute.path)
+          ) {
+            return builtRoute;
           }
         }
-      })
-      .catch(function (error) {
-        console.error('Resolvers error:', error);
-      });
+      }
+    } catch (err) {
+      console.error('Resolvers error:', err);
+    }
   }
 
-  _getTarget(src, req, res) {
+  getTarget(src: string, req: IncomingMessage, res?: ServerResponse) {
     const url = req.url;
 
     return this.resolve(src, url, req).then((route) => {
       if (!route) {
-        this.log && this.log.warn({ src: src, url: url }, 'no valid route found for given source');
+        this.log?.warn({ src: src, url: url }, 'no valid route found for given source');
         return;
       }
 
@@ -586,7 +660,7 @@ export class Redbird {
         //
         // remove prefix from src
         //
-        req._url = url; // save original url
+        (<any>req)._url = url; // save original url (hacky but works quite well)
         req.url = url.substr(pathname.length) || '';
       }
 
@@ -616,31 +690,29 @@ export class Redbird {
       // Often we want to use the host header of the target instead
       //
       if (target.useTargetHostHeader === true) {
-        req.host = target.host;
+        (<any>req).host = target.host;
       }
 
       if (route.opts.onRequest) {
         const resultFromRequestHandler = route.opts.onRequest(req, res, target);
         if (resultFromRequestHandler !== undefined) {
-          this.log &&
-            this.log.info(
-              'Proxying %s received result from onRequest handler, returning.',
-              src + url
-            );
+          this.log?.info(
+            'Proxying %s received result from onRequest handler, returning.',
+            src + url
+          );
           return resultFromRequestHandler;
         }
       }
 
-      this.log &&
-        this.log.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
+      this.log?.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
 
       return target;
     });
   }
 
-  _getSource(req) {
-    if (this.opts.preferForwardedHost === true && req.headers['x-forwarded-host']) {
-      return req.headers['x-forwarded-host'].split(':')[0];
+  getSource(req: IncomingMessage) {
+    if (this.opts.preferForwardedHost && req.headers['x-forwarded-host']) {
+      return (<string>req.headers['x-forwarded-host']).split(':')[0];
     }
     if (req.headers.host) {
       return req.headers.host.split(':')[0];
@@ -679,20 +751,24 @@ export class Redbird {
   }
 */
 
-  notFound(callback) {
+  notFound(callback: any) {
     if (typeof callback == 'function') {
       respondNotFound = callback;
     } else {
       throw Error('notFound callback is not a function');
     }
   }
+
+  shouldRedirectToHttps(certs: any, src: string, target: any) {
+    return certs && src in certs && target.sslRedirect && target.host != this.letsencryptHost;
+  }
 }
 
 //
 // Redirect to the HTTPS proxy
 //
-function redirectToHttps(req, res, target, ssl, log) {
-  req.url = req._url || req.url; // Get the original url since we are going to redirect.
+function redirectToHttps(req: IncomingMessage, res: ServerResponse, ssl: any, log: pino.Logger) {
+  req.url = (<any>req)._url || req.url; // Get the original url since we are going to redirect.
 
   const targetPort = ssl.redirectPort || ssl.port;
   const hostname = req.headers.host.split(':')[0] + (targetPort ? ':' + targetPort : '');
@@ -706,36 +782,36 @@ function redirectToHttps(req, res, target, ssl, log) {
   res.end();
 }
 
-function startsWith(input, str) {
+function startsWith(input: string, str: string) {
   return (
     input.slice(0, str.length) === str && (input.length === str.length || input[str.length] === '/')
   );
 }
 
-function prepareUrl(url) {
-  url = _.clone(url);
-  if (_.isString(url)) {
+function prepareUrl(url: string | URL) {
+  if (isString(url)) {
     url = setHttp(url);
 
     if (!validUrl.isHttpUri(url) && !validUrl.isHttpsUri(url)) {
       throw Error(`uri is not a valid http uri ${url}`);
     }
 
-    url = parseUrl(url);
+    return parseUrl(url);
   }
   return url;
 }
 
-function getCertData(source, unbundle) {
+/*
+function getCertData(source: any, unbundle?: boolean): any {
   const fs = require('fs');
   let data;
   // TODO: Support async source.
 
   if (source) {
-    if (_.isArray(source)) {
+    if (isArray(source)) {
       const sources = source;
-      return _.flatten(
-        _.map(sources, function (_source) {
+      return flatten(
+        map(sources, (_source: any) => {
           return getCertData(_source, unbundle);
         })
       );
@@ -750,12 +826,39 @@ function getCertData(source, unbundle) {
     return unbundle ? unbundleCert(data) : data;
   }
 }
+*/
+
+function getCertData(source: string | Buffer | string[] | Buffer[], unbundle?: boolean): any {
+  let data: string | undefined;
+
+  // Handle different source types
+  if (source) {
+    if (Array.isArray(source)) {
+      // Recursively process each item in the array and flatten the result
+      const sources = source;
+      return sources.map((src) => getCertData(src, unbundle)).flat();
+    } else if (Buffer.isBuffer(source)) {
+      // If source is a buffer, convert to string
+      data = source.toString('utf8');
+    } else if (fs.existsSync(source)) {
+      // If source is a file path, read the file content
+      data = fs.readFileSync(source, 'utf8');
+    }
+  }
+
+  // Return unbundled certificate data if required, or raw data
+  if (data) {
+    return unbundle ? unbundleCert(data) : data;
+  }
+
+  return null; // Return null if no valid data is found
+}
 
 /**
  Unbundles a file composed of several certificates.
  http://www.benjiegillam.com/2012/06/node-dot-js-ssl-certificate-chain/
  */
-function unbundleCert(bundle) {
+function unbundleCert(bundle: string) {
   const chain = bundle.trim().split('\n');
 
   const ca = [];
@@ -777,8 +880,12 @@ function unbundleCert(bundle) {
   return ca;
 }
 
-function createCredentialContext(key, cert, ca) {
-  const opts = {};
+function createCredentialContext(key: string, cert: string, ca: string) {
+  const opts: {
+    key?: string;
+    cert?: string;
+    ca?: string;
+  } = {};
 
   opts.key = getCertData(key);
   opts.cert = getCertData(cert);
@@ -794,41 +901,45 @@ function createCredentialContext(key, cert, ca) {
 //
 // https://stackoverflow.com/questions/18052919/javascript-regular-expression-to-add-protocol-to-url-string/18053700#18053700
 // Adds http protocol if non specified.
-function setHttp(link) {
+function setHttp(link: string) {
   if (link.search(/^http[s]?\:\/\//) === -1) {
     link = 'http://' + link;
   }
   return link;
 }
 
-function shouldRedirectToHttps(certs, src, target, proxy) {
-  return certs && src in certs && target.sslRedirect && target.host != proxy.letsencryptHost;
-}
-
-let respondNotFound = function (req, res) {
-  res.statusCode = 404;
+let respondNotFound = function (req: IncomingMessage, res: Socket | ServerResponse) {
+  if (res instanceof ServerResponse) {
+    res.statusCode = 404;
+  }
   res.write('Not Found');
   res.end();
 };
 
-export const buildRoute = function (route) {
-  if (!_.isString(route) && !_.isObject(route)) {
+export const buildRoute = function (route: string | ProxyRoute): ProxyRoute | null {
+  if (!isString(route) && !isObject(route)) {
     return null;
   }
 
-  if (_.isObject(route) && route.hasOwnProperty('urls') && route.hasOwnProperty('path')) {
+  if (isObject(route) && route.hasOwnProperty('urls') && route.hasOwnProperty('path')) {
     // default route type matched.
     return route;
   }
 
-  const cacheKey = _.isString(route) ? route : hash(route);
-  const entry = routeCache.get(cacheKey);
+  const cacheKey = isString(route) ? route : hash(route);
+  const entry = routeCache.get(cacheKey) as ProxyRoute;
   if (entry) {
     return entry;
   }
 
-  const routeObject = { rr: 0, isResolved: true };
-  if (_.isString(route)) {
+  const routeObject: {
+    urls?: any[];
+    path?: string;
+    rr: number;
+    isResolved: boolean;
+  } = { rr: 0, isResolved: true };
+
+  if (isString(route)) {
     routeObject.urls = [buildTarget(route)];
     routeObject.path = '/';
   } else {
@@ -836,20 +947,28 @@ export const buildRoute = function (route) {
       return null;
     }
 
-    routeObject.urls = (_.isArray(route.url) ? route.url : [route.url]).map(function (url) {
-      return buildTarget(url, route.opts || {});
+    routeObject.urls = (
+      Array.isArray((<any>route).url) ? (<any>route).url : [(<any>route).url]
+    ).map(function (url: string) {
+      return buildTarget(url, (<any>route).opts || {});
     });
 
-    routeObject.path = route.path || '/';
+    routeObject.path = (<any>route).path || '/';
   }
   routeCache.set(cacheKey, routeObject);
   return routeObject;
 };
 
-export const buildTarget = function (target, opts) {
+export const buildTarget = function (
+  target: string | URL,
+  opts?: { ssl?: any; useTargetHostHeader?: boolean }
+) {
   opts = opts || {};
-  target = prepareUrl(target);
-  target.sslRedirect = opts.ssl && opts.ssl.redirect !== false;
-  target.useTargetHostHeader = opts.useTargetHostHeader === true;
-  return target;
+  const targetURL = prepareUrl(target);
+
+  return {
+    ...targetURL,
+    sslRedirect: opts.ssl && opts.ssl.redirect !== false,
+    useTargetHostHeader: opts.useTargetHostHeader === true,
+  };
 };

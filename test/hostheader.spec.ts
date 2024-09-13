@@ -1,9 +1,8 @@
 'use strict';
 
 import { describe, it, expect } from 'vitest';
-import { Redbird } from '../index.mjs'; // Adjust the import path if necessary
-import { expect } from 'chai';
-import { createServer } from 'http';
+import { Redbird } from '../lib/index.js'; // Adjust the import path if necessary
+import { createServer, IncomingMessage } from 'http';
 import fetch from 'node-fetch';
 
 const TEST_PORT = 54674;
@@ -11,7 +10,6 @@ const PROXY_PORT = 53433;
 
 const opts = {
   port: PROXY_PORT,
-  bunyan: false,
 };
 
 describe('Target with a hostname', function () {
@@ -108,14 +106,13 @@ describe('Target with a hostname', function () {
 describe('Request with forwarded host header', function () {
   it('should prefer forwarded hostname if desired', function () {
     const redbird = new Redbird({
-      bunyan: false,
       preferForwardedHost: true,
     });
 
     expect(redbird.routing).to.be.an('object');
     const req = { headers: { host: '127.0.0.1', 'x-forwarded-host': 'subdomain.example.com' } };
 
-    const source = redbird._getSource(req);
+    const source = redbird.getSource(<any>req);
     expect(source).to.be.eql('subdomain.example.com');
 
     redbird.close();
@@ -127,7 +124,7 @@ describe('Request with forwarded host header', function () {
     expect(redbird.routing).to.be.an('object');
     const req = { headers: { host: '127.0.0.1', 'x-forwarded-host': 'subdomain.example.com' } };
 
-    const source = redbird._getSource(req);
+    const source = redbird.getSource(<any>req);
     expect(source).to.be.eql('127.0.0.1');
 
     redbird.close();
@@ -135,7 +132,7 @@ describe('Request with forwarded host header', function () {
 });
 
 function testServer() {
-  return new Promise(function (resolve, reject) {
+  return new Promise<IncomingMessage>(function (resolve, reject) {
     const server = createServer(function (req, res) {
       res.write('');
       res.end();
