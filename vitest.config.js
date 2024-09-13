@@ -6,6 +6,6 @@ export default defineConfig({
     environment: 'node',
 
     // Specify the file extensions and the files to include
-    include: ['**/*.spec.js'],
+    include: ['**/*.spec.ts'],
   },
 });

@@ -2,9 +2,13 @@
   "name": "redbird",
   "version": "0.9.0",
   "description": "A reverse proxy with support for dynamic tables",
-  "main": "index.js",
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "source": "./lib/index.ts",
   "scripts": {
     "test": "vitest",
+    "build": "tsc",
     "format": "prettier --write *.js \"{samples,lib,test,hl-tests}/**/*.js\""
   },
   "repository": {
@@ -33,21 +37,28 @@
     "http-proxy": "^1.18.0",
     "le-challenge-fs": "^2.0.9",
     "le-store-certbot": "^2.2.3",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "lru-cache": "^11.0.1",
     "node-etcd": "^7.0.0",
-    "object-hash": "^1.3.1",
+    "object-hash": "^3.0.0",
     "pino": "^9.4.0",
-    "safetimeout": "^0.1.2",
+    "safe-timers": "^1.1.0",
     "spdy": "^4.0.2",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
-    "chai": "^5.1.1",
+    "@types/http-proxy": "^1.17.15",
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^22.5.4",
+    "@types/object-hash": "^3.0.6",
+    "@types/safe-timers": "^1.1.2",
+    "@types/valid-url": "^1.0.7",
     "gulp": "^3.8.11",
     "gulp-eslint": "^0.9.0",
     "node-fetch": "^3.3.2",
     "prettier": "^2.0.1",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.2",
     "vitest": "^2.0.5"
   },
   "prettier": {

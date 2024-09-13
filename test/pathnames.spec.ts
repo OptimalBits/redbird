@@ -1,21 +1,14 @@
 'use strict';
 
-import { createServer, get } from 'http';
+import { createServer, get, IncomingMessage, ServerResponse } from 'http';
 import { describe, it, expect } from 'vitest';
-import { Redbird } from '../index.mjs'; // Adjust the import path if necessary
-import { expect } from 'chai';
+import { Redbird } from '../lib/index.js'; // Adjust the import path if necessary
 
 const TEST_PORT = 54673;
 const PROXY_PORT = 53432;
 
 const opts = {
   port: PROXY_PORT,
-  bunyan: false /* {
-		name: 'test',
-		streams: [{
-        	path: '/dev/null',
-    	}]
-	} */,
 };
 
 describe('Target with pathnames', function () {
@@ -32,7 +25,7 @@ describe('Target with pathnames', function () {
       expect(req.url).to.be.eql('/foo/bar/qux/a/b/c');
     });
 
-    return new Promise(function (resolve, reject) {
+    return new Promise<void>(function (resolve, reject) {
       get('http://127.0.0.1:' + PROXY_PORT + '/a/b/c', async function (res) {
         try {
           await redbird.close();
@@ -54,12 +47,12 @@ describe('Target with pathnames', function () {
 
     expect(redbird.routing).to.have.property('127.0.0.1');
 
-    const promiseServer = testServer().then(function (req) {
+    const promiseServer = testServer().then((req: IncomingMessage) => {
       expect(req.url).to.be.eql('/foo/bar/qux/a/b/c');
     });
 
-    return new Promise(function (resolve, reject) {
-      get('http://127.0.0.1:' + PROXY_PORT + '/path/a/b/c', async function (err, res) {
+    return new Promise<void>(function (resolve, reject) {
+      get(`http://127.0.0.1:${PROXY_PORT}/path/a/b/c`, async (res: IncomingMessage) => {
         try {
           await redbird.close();
           await promiseServer;
@@ -73,7 +66,7 @@ describe('Target with pathnames', function () {
 });
 
 function testServer() {
-  return new Promise(function (resolve, reject) {
+  return new Promise<IncomingMessage>(function (resolve, reject) {
     const server = createServer(function (req, res) {
       res.write('');
       res.end();
