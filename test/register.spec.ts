@@ -242,7 +242,7 @@ describe('Route resolution', function () {
       });
   });
 
-  it.only('should get a target if route available', async function () {
+  it('should get a target if route available', async function () {
     const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
