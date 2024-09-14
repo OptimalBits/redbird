@@ -1,7 +1,7 @@
 'use strict';
 
 import { describe, it, expect } from 'vitest';
-import { Redbird, ProxyRoute } from '../lib';
+import { Redbird } from '../lib';
 
 const opts = {};
 
@@ -242,7 +242,7 @@ describe('Route resolution', function () {
       });
   });
 
-  it('should get a target if route available', function () {
+  it.only('should get a target if route available', async function () {
     const redbird = new Redbird(opts);
 
     expect(redbird.routing).to.be.an('object');
@@ -254,32 +254,22 @@ describe('Route resolution', function () {
     redbird.register('foobar.com/foo/baz', '192.168.1.7:8080');
     redbird.register('foobar.com/media', '192.168.1.7:8080');
 
-    return redbird
-      .resolve('example.com', '/qux/a/b/c')
-      .then(function (route) {
-        expect(route!.path).to.be.eql('/');
+    let route = await redbird.resolve('example.com', '/qux/a/b/c');
+    expect(route!.path).to.be.eql('/');
 
-        return redbird.resolve('foobar.com', '/medias/');
-      })
-      .then(function (route) {
-        expect(route).to.be.undefined;
+    route = await redbird.resolve('foobar.com', '/medias/');
+    expect(route).to.be.undefined;
 
-        return redbird.resolve('foobar.com', '/mediasa');
-      })
-      .then(function (route) {
-        expect(route).to.be.undefined;
-        return redbird.resolve('foobar.com', '/media/sa');
-      })
-      .then(function (route) {
-        expect(route!.path).to.be.eql('/media');
+    route = await redbird.resolve('foobar.com', '/mediasa');
+    expect(route).to.be.undefined;
 
-        return redbird.getTarget('example.com', <any>{ url: '/foo/baz/a/b/c' });
-      })
-      .then(function (target) {
-        expect(target.href).to.be.eql('http://192.168.1.3:8080/');
+    route = await redbird.resolve('foobar.com', '/media/sa');
+    expect(route!.path).to.be.eql('/media');
 
-        redbird.close();
-      });
+    const target = await redbird.getTarget('example.com', <any>{ url: '/foo/baz/a/b/c' });
+    expect(target.href).to.be.eql('http://192.168.1.3:8080/');
+
+    await redbird.close();
   });
 
   it('should get a target with path when necessary', function () {

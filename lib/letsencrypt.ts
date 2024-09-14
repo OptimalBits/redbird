@@ -5,7 +5,7 @@
  *
  */
 
-import { ClientRequest, IncomingMessage, Server, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 import pino from 'pino';
 
 /**
@@ -81,7 +81,7 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
  *  TODO: We should use something like https://github.com/PaquitoSoft/memored/blob/master/index.js
  *  to avoid
  */
-function getCertificates(
+async function getCertificates(
   domain: string,
   email: string,
   production: boolean,
@@ -114,41 +114,41 @@ function getCertificates(
   });
 
   // Check in-memory cache of certificates for the named domain
-  return le.check({ domains: [domain] }).then(function (cert: string) {
-    const opts: {
-      domains: string[];
-      email: string;
-      agreeTos: boolean;
-      rsaKeySize: number;
-      challengeType: string;
-      duplicate?: boolean;
-    } = {
-      domains: [domain],
-      email: email,
-      agreeTos: true,
-      rsaKeySize: 2048, // 2048 or higher
-      challengeType: 'http-01',
-    };
+  const cert = await le.check({ domains: [domain] });
 
-    if (cert) {
-      if (renew) {
-        logger && logger.info('renewing cert for ' + domain);
-        opts.duplicate = true;
-        return le.renew(opts, cert).catch(function (err: Error) {
-          logger && logger.error(err, 'Error renewing certificates for ', domain);
-        });
-      } else {
-        logger && logger.info('Using cached cert for ' + domain);
-        return cert;
-      }
-    } else {
-      // Register Certificate manually
-      logger?.info('Manually registering certificate for %s', domain);
-      return le.register(opts).catch(function (err: Error) {
-        logger?.error(err, 'Error registering LetsEncrypt certificates');
+  const opts: {
+    domains: string[];
+    email: string;
+    agreeTos: boolean;
+    rsaKeySize: number;
+    challengeType: string;
+    duplicate?: boolean;
+  } = {
+    domains: [domain],
+    email: email,
+    agreeTos: true,
+    rsaKeySize: 2048, // 2048 or higher
+    challengeType: 'http-01',
+  };
+
+  if (cert) {
+    if (renew) {
+      logger && logger.info('renewing cert for ' + domain);
+      opts.duplicate = true;
+      return le.renew(opts, cert).catch(function (err: Error) {
+        logger && logger.error(err, 'Error renewing certificates for ', domain);
       });
+    } else {
+      logger && logger.info('Using cached cert for ' + domain);
+      return cert;
     }
-  });
+  } else {
+    // Register Certificate manually
+    logger?.info('Manually registering certificate for %s', domain);
+    return le.register(opts).catch(function (err: Error) {
+      logger?.error(err, 'Error registering LetsEncrypt certificates');
+    });
+  }
 }
 
 export { init, getCertificates };
