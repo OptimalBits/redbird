@@ -20,7 +20,7 @@ import { LRUCache } from 'lru-cache';
 
 // Custom modules.
 import * as letsencrypt from './letsencrypt.js';
-import { ProxyOptions, ResolverFn } from './interfaces/proxy-options.js';
+import { ProxyOptions, ResolverFn, Resolver } from './interfaces/proxy-options.js';
 import { Socket } from 'net';
 import { ProxyRoute } from './interfaces/proxy-route.js';
 
@@ -33,8 +33,8 @@ const ONE_MONTH = ONE_DAY * 30;
 
 export class Redbird {
   log?: Logger;
-  routing: any;
-  resolvers: ResolverFn[];
+  routing: any = {};
+  resolvers: Resolver[] = [];
   certs: any;
 
   private _defaultResolver: any;
@@ -63,34 +63,35 @@ export class Redbird {
       );
     }
 
-    this._defaultResolver = (host: string, url: string) => {
-      // Given a src resolve it to a target route if any available.
-      if (!host) {
-        return;
-      }
+    this._defaultResolver = {
+      fn: (host: string, url: string) => {
+        // Given a src resolve it to a target route if any available.
+        if (!host) {
+          return;
+        }
 
-      url = url || '/';
+        url = url || '/';
 
-      const routes = this.routing[host];
-      let i = 0;
+        const routes = this.routing[host];
+        let i = 0;
 
-      if (routes) {
-        const len = routes.length;
+        if (routes) {
+          const len = routes.length;
 
-        //
-        // Find path that matches the start of req.url
-        //
-        for (i = 0; i < len; i++) {
-          const route = routes[i];
+          //
+          // Find path that matches the start of req.url
+          //
+          for (i = 0; i < len; i++) {
+            const route = routes[i];
 
-          if (route.path === '/' || startsWith(url, route.path)) {
-            return route;
+            if (route.path === '/' || startsWith(url, route.path)) {
+              return route;
+            }
           }
         }
-      }
+      },
+      priority: 0,
     };
-
-    this._defaultResolver.priority = 0;
 
     if ((opts.cluster && typeof opts.cluster !== 'number') || opts.cluster > 32) {
       throw Error('cluster setting must be an integer less than 32');
@@ -122,7 +123,9 @@ export class Redbird {
       }
 
       if (opts.resolvers) {
-        this.addResolver(opts.resolvers);
+        for (let i = 0; i < opts.resolvers.length; i++) {
+          this.addResolver(opts.resolvers[i].fn, opts.resolvers[i].priority);
+        }
       }
 
       const websocketsUpgrade = async (req: any, socket: Socket, head: Buffer) => {
@@ -143,11 +146,6 @@ export class Redbird {
           respondNotFound(req, socket);
         }
       };
-
-      //
-      // Routing table.
-      //
-      this.routing = {};
 
       //
       // Create a proxy server with custom application logic
@@ -262,23 +260,22 @@ export class Redbird {
 
   setupHttpProxy(proxy: httpProxy, websocketsUpgrade: any, log: pino.Logger, opts: ProxyOptions) {
     const httpServerModule = opts.serverModule || http;
-    const server = httpServerModule.createServer((req, res) => {
-      const src = this.getSource(req);
-      this.getTarget(src, req, res).then((target) => {
+    const server = (this.server = httpServerModule.createServer(
+      async (req: IncomingMessage, res: ServerResponse) => {
+        const src = this.getSource(req);
+        const target = await this.getTarget(src, req, res);
+
         if (target) {
           if (this.shouldRedirectToHttps(this.certs, src, target)) {
-            redirectToHttps(req, res, opts.ssl, log);
+            redirectToHttps(req, res, this.opts.ssl, this.log);
           } else {
-            proxy.web(req, res, {
-              target: target,
-              secure: !!opts.secure,
-            });
+            proxy.web(req, res, { target, secure: !!opts.secure });
           }
         } else {
           respondNotFound(req, res);
         }
-      });
-    });
+      }
+    ));
 
     //
     // Listen to the `upgrade` event and proxy the
@@ -325,7 +322,7 @@ export class Redbird {
       ca?: any;
       opts?: any;
     } = {
-      SNICallback: function (hostname: string, cb: (err: any, ctx: any) => void) {
+      SNICallback: (hostname: string, cb: (err: any, ctx: any) => void) => {
         if (cb) {
           cb(null, certs[hostname]);
         } else {
@@ -391,55 +388,58 @@ export class Redbird {
     httpsServer.listen(sslOpts.port, sslOpts.ip);
   }
 
-  addResolver(resolver: ResolverFn | ResolverFn[]) {
+  addResolver(resolverFn: ResolverFn, priority?: number) {
     if (this.opts.cluster && cluster.isPrimary) {
       return this;
     }
 
-    const resolverArray = Array.isArray(resolver) ? resolver : [resolver];
-
-    resolverArray.forEach((resolveObj) => {
-      if (!isFunction(resolveObj)) {
-        throw new Error('Resolver must be an invokable function.');
+    // Check if the resolver is already added if so just update its priority
+    let found = false;
+    for (let i = 0; i < this.resolvers.length; i++) {
+      if (this.resolvers[i].fn === resolverFn) {
+        this.resolvers[i].priority = priority || 0;
+        found = true;
+        break;
       }
+    }
 
-      if (!resolveObj.hasOwnProperty('priority')) {
-        (<any>resolveObj).priority = 0;
-      }
+    if (!found) {
+      this.resolvers.push({
+        fn: resolverFn,
+        priority: priority || 0,
+      });
+    }
 
-      this.resolvers.push(resolveObj);
-    });
-
-    this.resolvers = sortBy(uniq(this.resolvers), ['priority']).reverse();
+    this.resolvers = sortBy(uniq(this.resolvers), 'priority').reverse();
   }
 
-  removeResolver(resolver: ResolverFn) {
+  removeResolver(resolverFn: ResolverFn) {
     if (this.opts.cluster && cluster.isPrimary) {
       return this;
     }
 
-    // since unique resolvers are not checked for performance,
+    // Since unique resolvers are not checked for performance,
     // just remove every existence.
-    this.resolvers = this.resolvers.filter(function (resolverFn) {
-      return resolverFn !== resolver;
+    this.resolvers = this.resolvers.filter(function (resolver) {
+      return resolverFn !== resolver.fn;
     });
   }
 
   /**
- Register a new route.
+  Register a new route.
 
- @src {String|URL} A string or a url parsed by node url module.
- Note that port is ignored, since the proxy just listens to one port.
+  @src {String|URL} A string or a url parsed by node url module.
+  Note that port is ignored, since the proxy just listens to one port.
 
- @target {String|URL} A string or a url parsed by node url module.
- @opts {Object} Route options.
- */
-  register(opts: { src: string | URL; target: string | URL; ssl: any }): Redbird;
-  register(src: string, opts: any): Redbird;
-  register(src: string | URL, target: string | URL, opts: any): Redbird;
-  register(src: any, target?: any, opts?: any): Redbird {
+  @target {String|URL} A string or a url parsed by node url module.
+  @opts {Object} Route options.
+  */
+  register(opts: { src: string | URL; target: string | URL; ssl: any }): Promise<void>;
+  register(src: string, opts: any): Promise<void>;
+  register(src: string | URL, target: string | URL, opts: any): Promise<void>;
+  async register(src: any, target?: any, opts?: any): Promise<void> {
     if (this.opts.cluster && cluster.isPrimary) {
-      return this;
+      return;
     }
 
     // allow registering with src or target as an object to pass in
@@ -460,7 +460,6 @@ export class Redbird {
     const routing = this.routing;
 
     src = prepareUrl(src);
-
     if (opts) {
       const ssl = opts.ssl;
       if (ssl) {
@@ -477,7 +476,7 @@ export class Redbird {
               return;
             }
             this.log?.info('Getting Lets Encrypt certificates for %s', src.hostname);
-            this.updateCertificates(
+            await this.updateCertificates(
               src.hostname,
               ssl.letsencrypt.email,
               ssl.letsencrypt.production,
@@ -492,12 +491,18 @@ export class Redbird {
     }
     target = buildTarget(target, opts);
 
-    const host = (routing[src.hostname] = routing[src.hostname] || []);
+    const hostname = src.hostname;
+    const host = (routing[hostname] = routing[hostname] || []);
     const pathname = src.pathname || '/';
     let route = host.find((route: { path: string }) => route.path === pathname);
 
     if (!route) {
-      route = { path: pathname, rr: 0, urls: [], opts: Object.assign({}, opts) };
+      route = {
+        path: pathname,
+        rr: 0,
+        urls: [],
+        opts: Object.assign({}, opts),
+      };
       host.push(route);
 
       //
@@ -511,7 +516,6 @@ export class Redbird {
     route.urls.push(target);
 
     this.log?.info({ from: src, to: target }, 'Registered a new route');
-    return this;
   }
 
   async updateCertificates(
@@ -615,29 +619,27 @@ export class Redbird {
     url?: string,
     req?: IncomingMessage
   ): Promise<ProxyRoute | undefined> {
-    const promiseArray = [];
+    host = host.toLowerCase();
 
-    host = host && host.toLowerCase();
-    for (let i = 0; i < this.resolvers.length; i++) {
-      promiseArray.push(this.resolvers[i].call(this, host, url, req));
-    }
+    const promiseArray = this.resolvers.map((resolver) => resolver.fn.call(this, host, url, req));
 
     try {
       const resolverResults = await Promise.all(promiseArray);
 
       for (let i = 0; i < resolverResults.length; i++) {
         const route = resolverResults[i];
-        const builtRoute = route && buildRoute(route);
-
-        if (builtRoute) {
-          // ensure resolved route has path that prefixes URL
-          // no need to check for native routes.
-          if (
-            !builtRoute.isResolved ||
-            builtRoute.path === '/' ||
-            startsWith(url, builtRoute.path)
-          ) {
-            return builtRoute;
+        if (route) {
+          const builtRoute = buildRoute(route);
+          if (builtRoute) {
+            // ensure resolved route has path that prefixes URL
+            // no need to check for native routes.
+            if (
+              !builtRoute.isResolved ||
+              builtRoute.path === '/' ||
+              startsWith(url, builtRoute.path)
+            ) {
+              return builtRoute;
+            }
           }
         }
       }
@@ -646,68 +648,64 @@ export class Redbird {
     }
   }
 
-  getTarget(src: string, req: IncomingMessage, res?: ServerResponse) {
+  async getTarget(src: string, req: IncomingMessage, res?: ServerResponse) {
     const url = req.url;
 
-    return this.resolve(src, url, req).then((route) => {
-      if (!route) {
-        this.log?.warn({ src: src, url: url }, 'no valid route found for given source');
-        return;
+    const route = await this.resolve(src, url, req);
+    if (!route) {
+      this.log?.warn({ src: src, url: url }, 'no valid route found for given source');
+      return;
+    }
+
+    const pathname = route.path;
+    if (pathname.length > 1) {
+      //
+      // remove prefix from src
+      //
+      (<any>req)._url = url; // save original url (hacky but works quite well)
+      req.url = url.substr(pathname.length) || '';
+    }
+
+    //
+    // Perform Round-Robin on the available targets
+    // TODO: if target errors with EHOSTUNREACH we should skip this
+    // target and try with another.
+    //
+    const urls = route.urls;
+    const j = route.rr;
+    route.rr = (j + 1) % urls.length; // get and update Round-robin index.
+    const target = route.urls[j];
+
+    //
+    // Fix request url if targetname specified.
+    //
+    if (target.pathname) {
+      if (req.url) {
+        req.url = path.posix.join(target.pathname, req.url);
+      } else {
+        req.url = target.pathname;
       }
+    }
 
-      const pathname = route.path;
-      if (pathname.length > 1) {
-        //
-        // remove prefix from src
-        //
-        (<any>req)._url = url; // save original url (hacky but works quite well)
-        req.url = url.substr(pathname.length) || '';
+    //
+    // Host headers are passed through from the source by default
+    // Often we want to use the host header of the target instead
+    //
+    if (target.useTargetHostHeader === true) {
+      (<any>req).host = target.host;
+    }
+
+    if (route.opts.onRequest) {
+      const resultFromRequestHandler = route.opts.onRequest(req, res, target);
+      if (resultFromRequestHandler !== undefined) {
+        this.log?.info('Proxying %s received result from onRequest handler, returning.', src + url);
+        return resultFromRequestHandler;
       }
+    }
 
-      //
-      // Perform Round-Robin on the available targets
-      // TODO: if target errors with EHOSTUNREACH we should skip this
-      // target and try with another.
-      //
-      const urls = route.urls;
-      const j = route.rr;
-      route.rr = (j + 1) % urls.length; // get and update Round-robin index.
-      const target = route.urls[j];
+    this.log?.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
 
-      //
-      // Fix request url if targetname specified.
-      //
-      if (target.pathname) {
-        if (req.url) {
-          req.url = path.posix.join(target.pathname, req.url);
-        } else {
-          req.url = target.pathname;
-        }
-      }
-
-      //
-      // Host headers are passed through from the source by default
-      // Often we want to use the host header of the target instead
-      //
-      if (target.useTargetHostHeader === true) {
-        (<any>req).host = target.host;
-      }
-
-      if (route.opts.onRequest) {
-        const resultFromRequestHandler = route.opts.onRequest(req, res, target);
-        if (resultFromRequestHandler !== undefined) {
-          this.log?.info(
-            'Proxying %s received result from onRequest handler, returning.',
-            src + url
-          );
-          return resultFromRequestHandler;
-        }
-      }
-
-      this.log?.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
-
-      return target;
-    });
+    return target;
   }
 
   getSource(req: IncomingMessage) {
@@ -749,7 +747,7 @@ export class Redbird {
         }
       ]
   }
-*/
+  */
 
   notFound(callback: any) {
     if (typeof callback == 'function') {
@@ -782,12 +780,6 @@ function redirectToHttps(req: IncomingMessage, res: ServerResponse, ssl: any, lo
   res.end();
 }
 
-function startsWith(input: string, str: string) {
-  return (
-    input.slice(0, str.length) === str && (input.length === str.length || input[str.length] === '/')
-  );
-}
-
 function prepareUrl(url: string | URL) {
   if (isString(url)) {
     url = setHttp(url);
@@ -800,33 +792,6 @@ function prepareUrl(url: string | URL) {
   }
   return url;
 }
-
-/*
-function getCertData(source: any, unbundle?: boolean): any {
-  const fs = require('fs');
-  let data;
-  // TODO: Support async source.
-
-  if (source) {
-    if (isArray(source)) {
-      const sources = source;
-      return flatten(
-        map(sources, (_source: any) => {
-          return getCertData(_source, unbundle);
-        })
-      );
-    } else if (Buffer.isBuffer(source)) {
-      data = source.toString('utf8');
-    } else if (fs.existsSync(source)) {
-      data = fs.readFileSync(source, 'utf8');
-    }
-  }
-
-  if (data) {
-    return unbundle ? unbundleCert(data) : data;
-  }
-}
-*/
 
 function getCertData(source: string | Buffer | string[] | Buffer[], unbundle?: boolean): any {
   let data: string | undefined;
@@ -972,3 +937,9 @@ export const buildTarget = function (
     useTargetHostHeader: opts.useTargetHostHeader === true,
   };
 };
+
+function startsWith(input: string, str: string) {
+  return (
+    input.slice(0, str.length) === str && (input.length === str.length || input[str.length] === '/')
+  );
+}

@@ -11,6 +11,11 @@ export type ResolverFn = (
   req?: IncomingMessage
 ) => ResolverFnResult | Promise<ResolverFnResult>;
 
+export interface Resolver {
+  fn: ResolverFn;
+  priority: number;
+}
+
 export interface SSLConfig {
   port?: number;
   ip?: string;
@@ -43,11 +48,11 @@ export interface ProxyOptions {
   letsencrypt?: {
     path: string;
     port: number;
-    renewWithin: number;
-    minRenewTime: number;
+    renewWithin?: number;
+    minRenewTime?: number;
   };
 
-  resolvers?: ResolverFn | ResolverFn[];
+  resolvers?: Resolver[];
 
   // NTLM Auth
   ntlm?: boolean;

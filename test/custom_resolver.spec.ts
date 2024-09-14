@@ -20,8 +20,10 @@ describe('Custom Resolver', () => {
   });
 
   it('Should register resolver with right priority', async () => {
-    const resolver = () => 'http://127.0.0.1:8080';
-    resolver.priority = 1;
+    const resolver = {
+      fn: (host: string, url: string) => 'http://127.0.0.1:8080',
+      priority: 1,
+    };
 
     let options = { ...opts, resolvers: [resolver] };
     let redbird = new Redbird(options);
@@ -36,25 +38,20 @@ describe('Custom Resolver', () => {
     expect(redbird.resolvers[1]).toEqual(resolver);
 
     await redbird.close();
-
-    // Testing with invalid resolver input
-    options.resolvers = [<any>{}];
-    expect(() => new Redbird(options)).toThrow(Error);
   });
 
   it('Should add and remove resolver after launch', async () => {
-    const resolver: ResolverFn = (host: string, url: string, req?: IncomingMessage) => '';
-    (<any>resolver).priority = 1;
+    const resolverFn: ResolverFn = (host: string, url: string, req?: IncomingMessage) => '';
 
     const redbird = new Redbird(opts);
-    redbird.addResolver(resolver);
+    redbird.addResolver(resolverFn, 1);
     expect(redbird.resolvers).toHaveLength(2);
-    expect(redbird.resolvers[0]).toEqual(resolver);
+    expect(redbird.resolvers[0].fn).toEqual(resolverFn);
 
-    redbird.addResolver(resolver);
+    redbird.addResolver(resolverFn);
     expect(redbird.resolvers).toHaveLength(2); // Only allows uniques.
 
-    redbird.removeResolver(resolver);
+    redbird.removeResolver(resolverFn);
     expect(redbird.resolvers).toHaveLength(1);
     expect(redbird.resolvers[0]).toEqual(redbird.defaultResolver);
 
@@ -128,14 +125,12 @@ describe('Custom Resolver', () => {
 
   it('Should resolve properly as expected', async () => {
     const proxy = new Redbird(opts);
-    const resolver = function (host: string, url: string) {
+    const resolverFn = function (host: string, url: string) {
       return url.match(/\/ignore/i) ? null : 'http://172.12.0.1/home';
     };
 
-    (<any>resolver).priority = 1;
-
     proxy.register('mysite.example.com', 'http://127.0.0.1:9999');
-    proxy.addResolver(resolver);
+    proxy.addResolver(resolverFn, 1);
 
     // must match the resolver
     const result = await proxy.resolve('randomsite.example.com', '/anywhere');
@@ -147,25 +142,22 @@ describe('Custom Resolver', () => {
 
     // expect route to match resolver even though it matches registered address
     const result2 = await proxy.resolve('mysite.example.com', '/somewhere');
-
     expect(result2!.urls![0].hostname).to.be.eq('172.12.0.1');
 
     // use default resolver, as custom resolver should ignore input.
     const result3 = await proxy.resolve('mysite.example.com', '/ignore');
-
     expect(result3!.urls![0].hostname).to.be.eq('127.0.0.1');
 
     // make custom resolver low priority and test.
     // result should match default resolver
-    (<any>resolver).priority = -1;
-    proxy.addResolver(resolver);
+    proxy.addResolver(resolverFn, -1);
     const result4 = await proxy.resolve('mysite.example.com', '/somewhere');
     expect(result4!.urls![0].hostname).to.be.eq('127.0.0.1');
 
     // both custom and default resolvers should ignore
     const result5 = await proxy.resolve('somesite.example.com', '/ignore');
     expect(result5).to.be.undefined;
-    proxy.removeResolver(resolver);
+    proxy.removeResolver(resolverFn);
 
     // for path-based routing
     // when resolver path doesn't match that of url, skip
@@ -176,8 +168,7 @@ describe('Custom Resolver', () => {
         url: 'http://172.12.0.1/home',
       };
     };
-    resolverPath.priority = 1;
-    proxy.addResolver(resolverPath);
+    proxy.addResolver(resolverPath, 1);
 
     const result6 = await proxy.resolve('somesite.example.com', '/notme');
 

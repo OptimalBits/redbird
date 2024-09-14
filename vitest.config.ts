@@ -8,4 +8,7 @@ export default defineConfig({
     // Specify the file extensions and the files to include
     include: ['**/*.spec.ts'],
   },
+  resolve: {
+    extensions: ['.ts', '.js'],
+  },
 });

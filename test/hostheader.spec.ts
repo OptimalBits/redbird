@@ -2,8 +2,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { Redbird } from '../lib/index.js'; // Adjust the import path if necessary
-import { createServer, IncomingMessage } from 'http';
 import fetch from 'node-fetch';
+import { testServer } from './tes_utils.js';
 
 const TEST_PORT = 54674;
 const PROXY_PORT = 53433;
@@ -26,7 +26,7 @@ describe('Target with a hostname', function () {
 
     expect(redbird.routing).to.have.property('127.0.0.1');
 
-    const promiseServer = testServer().then(function (req) {
+    const promiseServer = testServer(TEST_PORT).then(function (req) {
       expect(req.headers['host']).to.be.eql(target);
     });
 
@@ -50,7 +50,7 @@ describe('Target with a hostname', function () {
 
     const source = `127.0.0.1:${PROXY_PORT}`;
 
-    const promiseServer = testServer().then(function (req) {
+    const promiseServer = testServer(TEST_PORT).then(function (req) {
       expect(req.headers['host']).to.be.eql(source);
     });
 
@@ -131,19 +131,3 @@ describe('Request with forwarded host header', function () {
   });
 });
 
-function testServer() {
-  return new Promise<IncomingMessage>(function (resolve, reject) {
-    const server = createServer(function (req, res) {
-      res.write('');
-      res.end();
-      server.close((err) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(req);
-      });
-    });
-
-    server.listen(TEST_PORT);
-  });
-}
