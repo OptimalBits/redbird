@@ -6,6 +6,7 @@ import path from 'path';
 import { URL, parse as parseUrl } from 'url';
 import cluster from 'cluster';
 import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import https from 'https';
 import fs from 'fs';
 import tls from 'tls';
 
@@ -310,7 +311,7 @@ export class Redbird {
   }
 
   setupHttpsProxy(proxy: httpProxy, websocketsUpgrade: any, sslOpts: any) {
-    let https;
+    let httpsModule;
     this.certs = this.certs || {};
     const certs = this.certs;
 
@@ -350,15 +351,15 @@ export class Redbird {
     }
 
     if (sslOpts.http2) {
-      https = sslOpts.serverModule || require('spdy');
+      httpsModule = sslOpts.serverModule || require('spdy');
       if (isObject(sslOpts.http2)) {
         sslOpts.spdy = sslOpts.http2;
       }
     } else {
-      https = sslOpts.serverModule || require('https');
+      httpsModule = sslOpts.serverModule || https;
     }
 
-    const httpsServer = (this.httpsServer = https.createServer(
+    const httpsServer = (this.httpsServer = httpsModule.createServer(
       ssl,
       async (req: IncomingMessage, res: ServerResponse) => {
         const src = this.getSource(req);
