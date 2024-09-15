@@ -5,7 +5,10 @@
  *
  */
 
-import { IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse, createServer } from 'http';
+import path from 'path';
+import url from 'url';
+import fs from 'fs';
 import pino from 'pino';
 
 import leChallengeFs from './third-party/le-challenge-fs.js';
@@ -23,11 +26,6 @@ let leStoreConfig = {};
 const webrootPath = ':configDir/:hostname/.well-known/acme-challenge';
 
 function init(certPath: string, port: number, logger: pino.Logger<never, boolean>) {
-  const http = require('http');
-  const path = require('path');
-  const url = require('url');
-  const fs = require('fs');
-
   logger?.info('Initializing letsencrypt, path %s, port: %s', certPath, port);
 
   leStoreConfig = {
@@ -45,34 +43,32 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
   };
 
   // we need to proxy for example: 'example.com/.well-known/acme-challenge' -> 'localhost:port/example.com/'
-  http
-    .createServer(function (req: IncomingMessage, res: ServerResponse) {
-      var uri = url.parse(req.url).pathname;
-      var filename = path.join(certPath, uri);
-      var isForbiddenPath = uri.length < 3 || filename.indexOf(certPath) !== 0;
+  createServer(function (req: IncomingMessage, res: ServerResponse) {
+    var uri = url.parse(req.url).pathname;
+    var filename = path.join(certPath, uri);
+    var isForbiddenPath = uri.length < 3 || filename.indexOf(certPath) !== 0;
 
-      if (isForbiddenPath) {
-        logger && logger.info('Forbidden request on LetsEncrypt port %s: %s', port, filename);
-        res.writeHead(403);
+    if (isForbiddenPath) {
+      logger && logger.info('Forbidden request on LetsEncrypt port %s: %s', port, filename);
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+
+    logger && logger.info('LetsEncrypt CA trying to validate challenge %s', filename);
+
+    fs.stat(filename, function (err: Error, stats: any) {
+      if (err || !stats.isFile()) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.write('404 Not Found\n');
         res.end();
         return;
       }
 
-      logger && logger.info('LetsEncrypt CA trying to validate challenge %s', filename);
-
-      fs.stat(filename, function (err: Error, stats: any) {
-        if (err || !stats.isFile()) {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.write('404 Not Found\n');
-          res.end();
-          return;
-        }
-
-        res.writeHead(200);
-        fs.createReadStream(filename, 'binary').pipe(res);
-      });
-    })
-    .listen(port);
+      res.writeHead(200);
+      fs.createReadStream(filename, 'binary').pipe(res);
+    });
+  }).listen(port);
 }
 
 /**
@@ -90,7 +86,7 @@ async function getCertificates(
   renew: boolean,
   logger: pino.Logger<never, boolean>
 ) {
-  const LE = require('greenlock');
+  const LE = await import('greenlock');
   let le;
 
   // Storage Backend
