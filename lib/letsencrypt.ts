@@ -86,11 +86,10 @@ async function getCertificates(
   renew: boolean,
   logger: pino.Logger<never, boolean>
 ) {
-  const LE = await import('greenlock');
-  let le;
+  const LE = (await import('greenlock')).default;
 
   // Storage Backend
-  const leStore = require('le-store-certbot').create(leStoreConfig);
+  const leStore = (await import('le-store-certbot')).create(leStoreConfig);
 
   // ACME Challenge Handlers
   const leChallenge = leChallengeFs.create({
@@ -98,7 +97,7 @@ async function getCertificates(
     debug: false,
   });
 
-  le = LE.create({
+  const le = LE.create({
     server: production
       ? 'https://acme-v02.api.letsencrypt.org/directory'
       : 'https://acme-staging-v02.api.letsencrypt.org/directory',
