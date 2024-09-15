@@ -303,11 +303,10 @@ export class Redbird {
     const targetHost = 'http://' + this.letsencryptHost;
     const challengeResolver = (host: string, url: string) => {
       if (/^\/.well-known\/acme-challenge/.test(url)) {
-        return targetHost + '/' + host;
+        return `${targetHost}/${host}`;
       }
     };
-    challengeResolver.priority = 9999;
-    this.addResolver(challengeResolver);
+    this.addResolver(challengeResolver, 9999);
   }
 
   setupHttpsProxy(proxy: httpProxy, websocketsUpgrade: any, sslOpts: any) {
@@ -703,7 +702,7 @@ export class Redbird {
       (<any>req).host = target.host;
     }
 
-    if (route.opts.onRequest) {
+    if (route.opts?.onRequest) {
       const resultFromRequestHandler = route.opts.onRequest(req, res, target);
       if (resultFromRequestHandler !== undefined) {
         this.log?.info('Proxying %s received result from onRequest handler, returning.', src + url);

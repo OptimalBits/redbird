@@ -11,7 +11,7 @@ import url from 'url';
 import fs from 'fs';
 import pino from 'pino';
 
-import leChallengeFs from './third-party/le-challenge-fs.js';
+import LeChallengeFs from './third-party/le-challenge-fs.js';
 
 /**
  *  LetsEncrypt certificates are stored like the following:
@@ -44,20 +44,27 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
 
   // we need to proxy for example: 'example.com/.well-known/acme-challenge' -> 'localhost:port/example.com/'
   createServer(function (req: IncomingMessage, res: ServerResponse) {
-    var uri = url.parse(req.url).pathname;
-    var filename = path.join(certPath, uri);
-    var isForbiddenPath = uri.length < 3 || filename.indexOf(certPath) !== 0;
-
-    if (isForbiddenPath) {
-      logger && logger.info('Forbidden request on LetsEncrypt port %s: %s', port, filename);
-      res.writeHead(403);
+    if (req.method !== 'GET') {
+      res.statusCode = 405; // Method Not Allowed
       res.end();
       return;
     }
 
-    logger && logger.info('LetsEncrypt CA trying to validate challenge %s', filename);
+    const reqPath = url.parse(req.url).pathname;
+    const basePath = path.resolve(certPath);
+    const safePath = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, ''); // Prevent directory traversal
+    const fullPath = path.join(basePath, safePath);
 
-    fs.stat(filename, function (err: Error, stats: any) {
+    if (!fullPath.startsWith(basePath)) {
+      logger?.info(`Attempted directory traversal attack: ${req.url}`);
+      res.statusCode = 403; // Forbidden
+      res.end('Access denied');
+      return;
+    }
+
+    logger?.info('LetsEncrypt CA trying to validate challenge %s', fullPath);
+
+    fs.stat(fullPath, function (err: Error, stats: any) {
       if (err || !stats.isFile()) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.write('404 Not Found\n');
@@ -66,7 +73,7 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
       }
 
       res.writeHead(200);
-      fs.createReadStream(filename, 'binary').pipe(res);
+      fs.createReadStream(fullPath, 'binary').pipe(res);
     });
   }).listen(port);
 }
@@ -93,7 +100,7 @@ async function getCertificates(
   const leStore = (await import('le-store-certbot')).create(leStoreConfig);
 
   // ACME Challenge Handlers
-  const leChallenge = leChallengeFs.create({
+  const leChallenge = LeChallengeFs.create({
     loopbackPort: loopbackPort,
     webrootPath,
     debug: false,
