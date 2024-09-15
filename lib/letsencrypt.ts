@@ -82,6 +82,7 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
 async function getCertificates(
   domain: string,
   email: string,
+  loopbackPort: number,
   production: boolean,
   renew: boolean,
   logger: pino.Logger<never, boolean>
@@ -93,6 +94,7 @@ async function getCertificates(
 
   // ACME Challenge Handlers
   const leChallenge = leChallengeFs.create({
+    loopbackPort: loopbackPort,
     webrootPath,
     debug: false,
   });
