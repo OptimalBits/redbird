@@ -527,7 +527,14 @@ export class Redbird {
     renew?: boolean
   ) {
     try {
-      const certs = await letsencrypt.getCertificates(domain, email, production, renew, this.log);
+      const certs = await letsencrypt.getCertificates(
+        domain,
+        email,
+        this.opts.letsencrypt?.port,
+        production,
+        renew,
+        this.log
+      );
       if (certs) {
         const opts = {
           key: certs.privkey,
