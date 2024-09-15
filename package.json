@@ -39,6 +39,7 @@
     "le-store-certbot": "^2.2.3",
     "lodash": "^4.17.21",
     "lru-cache": "^11.0.1",
+    "mkdirp": "^3.0.1",
     "node-etcd": "^7.0.0",
     "object-hash": "^3.0.0",
     "pino": "^9.4.0",

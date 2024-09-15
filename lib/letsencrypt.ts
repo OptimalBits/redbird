@@ -8,6 +8,8 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import pino from 'pino';
 
+import leChallengeFs from './third-party/le-challenge-fs.js';
+
 /**
  *  LetsEncrypt certificates are stored like the following:
  *
@@ -92,10 +94,10 @@ async function getCertificates(
   let le;
 
   // Storage Backend
-  var leStore = require('le-store-certbot').create(leStoreConfig);
+  const leStore = require('le-store-certbot').create(leStoreConfig);
 
   // ACME Challenge Handlers
-  var leChallenge = require('le-challenge-fs').create({
+  const leChallenge = leChallengeFs.create({
     webrootPath,
     debug: false,
   });
