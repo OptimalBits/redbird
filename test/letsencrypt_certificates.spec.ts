@@ -7,7 +7,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { certificate, key } from './fixtures';
-import pino from 'pino';
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
@@ -109,9 +108,6 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
       port: 8080,
       ssl: {
         port: 8443,
-        // Provide paths to your default SSL key and cert files
-        //key: path.join(__dirname, 'ssl', 'default.key'), // Replace with actual paths
-        //cert: path.join(__dirname, 'ssl', 'default.crt'), // Replace with actual paths
       },
       letsencrypt: {
         path: path.join(__dirname, 'letsencrypt'), // Path to store Let's Encrypt certificates
