@@ -774,6 +774,9 @@ export class Redbird {
   }
 
   async close() {
+    this.proxy.close();
+    this.agent && this.agent.destroy();
+
     // Clear any renewal timers
     if (this.certs) {
       Object.keys(this.certs).forEach((domain) => {
@@ -788,11 +791,10 @@ export class Redbird {
     this.letsencryptServer?.close();
 
     await Promise.all(
-      [this.proxy, this.server, this.httpsServer]
+      [this.server, this.httpsServer]
         .filter((s) => s)
         .map((server) => new Promise((resolve) => server.close(resolve)))
     );
-    this.agent && this.agent.destroy();
   }
 
   //
