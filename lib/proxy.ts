@@ -229,10 +229,15 @@ export class Redbird {
         //
         // Send a 500 http status if headers have been sent
         //
-        if (err.code === 'ECONNREFUSED') {
-          res.writeHead && res.writeHead(502);
-        } else if (!res.headersSent) {
-          res.writeHead && res.writeHead(500, err.message, { 'content-type': 'text/plain' });
+        if (!res || !res.writeHead) {
+          this.log?.error(err, 'Proxy Error');
+          return;
+        } else {
+          if (err.code === 'ECONNREFUSED') {
+            res.writeHead(502);
+          } else if (!res.headersSent) {
+            res.writeHead(500, err.message, { 'content-type': 'text/plain' });
+          }
         }
 
         //
