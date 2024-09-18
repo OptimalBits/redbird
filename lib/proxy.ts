@@ -5,8 +5,9 @@
 import path from 'path';
 import { URL, parse as parseUrl } from 'url';
 import cluster from 'cluster';
-import http, { Agent, ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import http, { Agent, ClientRequest, IncomingMessage, Server, ServerResponse } from 'http';
 import https from 'https';
+import http2, { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import fs from 'fs';
 import tls from 'tls';
 
@@ -37,6 +38,9 @@ export class Redbird {
   routing: any = {};
   resolvers: Resolver[] = [];
   certs: any;
+  lazyCerts: {
+    [key: string]: { email: string; production: boolean; renewWithin: number };
+  } = {};
 
   private _defaultResolver: any;
   private proxy: httpProxy;
@@ -46,6 +50,7 @@ export class Redbird {
   private httpsServer: any;
 
   private letsencryptHost: string;
+  private letsencryptServer: Server;
 
   get defaultResolver() {
     return this._defaultResolver;
@@ -296,12 +301,16 @@ export class Redbird {
     return server;
   }
 
+  /**
+   * Special resolver for handling Let's Encrypt ACME challenges.
+   * @param opts
+   */
   setupLetsencrypt(opts: ProxyOptions) {
     if (!opts.letsencrypt.path) {
       throw Error('Missing certificate path for Lets Encrypt');
     }
     const letsencryptPort = opts.letsencrypt.port || defaultLetsencryptPort;
-    letsencrypt.init(opts.letsencrypt.path, letsencryptPort, this.log);
+    this.letsencryptServer = letsencrypt.init(opts.letsencrypt.path, letsencryptPort, this.log);
 
     opts.resolvers = opts.resolvers || [];
     this.letsencryptHost = '127.0.0.1:' + letsencryptPort;
@@ -327,11 +336,25 @@ export class Redbird {
       ca?: any;
       opts?: any;
     } = {
-      SNICallback: (hostname: string, cb: (err: any, ctx: any) => void) => {
+      SNICallback: async (hostname: string, cb: (err: any, ctx?: any) => void) => {
+        if (!certs[hostname] && this.lazyCerts[hostname]) {
+          try {
+            await this.updateCertificates(
+              hostname,
+              this.lazyCerts[hostname].email,
+              this.lazyCerts[hostname].production,
+              this.lazyCerts[hostname].renewWithin
+            );
+          } catch (err) {
+            console.error('Error getting LetsEncrypt certificates', err);
+            return cb(err);
+          }
+        } else if (!certs[hostname]) {
+          return cb(new Error('No certs for hostname ' + hostname));
+        }
+
         if (cb) {
           cb(null, certs[hostname]);
-        } else {
-          return certs[hostname];
         }
       },
       //
@@ -355,10 +378,12 @@ export class Redbird {
     }
 
     if (sslOpts.http2) {
-      httpsModule = sslOpts.serverModule || require('spdy');
-      if (isObject(sslOpts.http2)) {
-        sslOpts.spdy = sslOpts.http2;
-      }
+      httpsModule = sslOpts.serverModule || {
+        createServer: (
+          sslOpts: any,
+          cb: (req: Http2ServerRequest, res: Http2ServerResponse) => void
+        ) => http2.createSecureServer(sslOpts, cb),
+      };
     } else {
       httpsModule = sslOpts.serverModule || https;
     }
@@ -439,7 +464,16 @@ export class Redbird {
   @target {String|URL} A string or a url parsed by node url module.
   @opts {Object} Route options.
   */
-  register(opts: { src: string | URL; target: string | URL; ssl: any }): Promise<void>;
+  register(opts: {
+    src: string | URL;
+    target: string | URL;
+    ssl: {
+      key?: string;
+      cert?: string;
+      ca?: string;
+      letsencrypt?: { email: string; production: boolean; lazy?: boolean };
+    };
+  }): Promise<void>;
   register(src: string, opts: any): Promise<void>;
   register(src: string | URL, target: string | URL, opts: any): Promise<void>;
   async register(src: any, target?: any, opts?: any): Promise<void> {
@@ -480,13 +514,23 @@ export class Redbird {
               console.error('Missing certificate path for Lets Encrypt');
               return;
             }
-            this.log?.info('Getting Lets Encrypt certificates for %s', src.hostname);
-            await this.updateCertificates(
-              src.hostname,
-              ssl.letsencrypt.email,
-              ssl.letsencrypt.production,
-              this.opts.letsencrypt.renewWithin || ONE_MONTH
-            );
+
+            if (!ssl.letsencrypt.lazy) {
+              this.log?.info('Getting Lets Encrypt certificates for %s', src.hostname);
+              await this.updateCertificates(
+                src.hostname,
+                ssl.letsencrypt.email,
+                ssl.letsencrypt.production,
+                this.opts.letsencrypt.renewWithin || ONE_MONTH
+              );
+            } else {
+              // We need to store the letsencrypt options for this domain somewhere
+              this.log?.info('Lazy loading Lets Encrypt certificates for %s', src.hostname);
+              this.lazyCerts[src.hostname] = {
+                ...ssl.letsencrypt,
+                renewWithin: this.opts.letsencrypt.renewWithin || ONE_MONTH,
+              };
+            }
           } else {
             // Trigger the use of the default certificates.
             this.certs[src.hostname] = void 0;
@@ -631,11 +675,11 @@ export class Redbird {
     url?: string,
     req?: IncomingMessage
   ): Promise<ProxyRoute | undefined> {
-    host = host.toLowerCase();
-
-    const promiseArray = this.resolvers.map((resolver) => resolver.fn.call(this, host, url, req));
-
     try {
+      host = host.toLowerCase();
+
+      const promiseArray = this.resolvers.map((resolver) => resolver.fn.call(this, host, url, req));
+
       const resolverResults = await Promise.all(promiseArray);
 
       for (let i = 0; i < resolverResults.length; i++) {
@@ -729,15 +773,26 @@ export class Redbird {
     }
   }
 
-  close() {
-    this.proxy.close();
-    this.agent && this.agent.destroy();
+  async close() {
+    // Clear any renewal timers
+    if (this.certs) {
+      Object.keys(this.certs).forEach((domain) => {
+        const cert = this.certs[domain];
+        if (cert && cert.renewalTimeout) {
+          safe.clearTimeout(cert.renewalTimeout);
+          cert.renewalTimeout = null;
+        }
+      });
+    }
 
-    return Promise.all(
-      [this.server, this.httpsServer]
+    this.letsencryptServer?.close();
+
+    await Promise.all(
+      [this.proxy, this.server, this.httpsServer]
         .filter((s) => s)
         .map((server) => new Promise((resolve) => server.close(resolve)))
     );
+    this.agent && this.agent.destroy();
   }
 
   //

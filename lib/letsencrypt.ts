@@ -43,7 +43,7 @@ function init(certPath: string, port: number, logger: pino.Logger<never, boolean
   };
 
   // we need to proxy for example: 'example.com/.well-known/acme-challenge' -> 'localhost:port/example.com/'
-  createServer(function (req: IncomingMessage, res: ServerResponse) {
+  return createServer(function (req: IncomingMessage, res: ServerResponse) {
     if (req.method !== 'GET') {
       res.statusCode = 405; // Method Not Allowed
       res.end();
