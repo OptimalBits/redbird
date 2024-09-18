@@ -2,7 +2,7 @@
 
 ## With built-in Cluster, HTTP2, [LetsEncrypt](https://letsencrypt.org/) and [Docker](https://www.docker.com/) support
 
-<img src="https://github.com/user-attachments/assets/f53820d4-96bc-4d94-b0a6-89ac0ae900df" width="600" height="400">
+<img src="https://github.com/user-attachments/assets/f53820d4-96bc-4d94-b0a6-89ac0ae900df" width="500" height="400">
 
 It should be easy and robust to handle dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption.
 
