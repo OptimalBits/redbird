@@ -85,6 +85,8 @@ function makeHttpsRequest(options) {
   });
 }
 
+const responseMessage = 'Hello from target server'
+
 describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
   let proxy: Redbird;
   let targetServer: Server;
@@ -94,7 +96,7 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
     // Start a simple HTTP server to act as the backend target
     targetServer = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('Hello from target server');
+      res.end(responseMessage);
     });
 
     await new Promise((resolve) => {
@@ -156,7 +158,7 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
 
     const response = await makeHttpsRequest(options);
     expect(response.status).toBe(200);
-    expect(response.data).toBe('Hello from target server');
+    expect(response.data).toBe(responseMessage);
   });
 
   it('should renew SSL certificates that are halfway to expire', async () => {
@@ -231,5 +233,59 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
 
     // Restore real timers
     vi.useRealTimers();
+  });
+
+  it('should not request certificates immediately for lazy loaded domains', async () => {
+    // Reset mocks
+    getCertificatesMock.mockClear();
+
+    // Simulate registering a domain with lazy loading enabled
+    await proxy.register('https://lazy.example.com', `http://localhost:${TEST_PORT}`, {
+      ssl: {
+        letsencrypt: {
+          email: 'email@example.com',
+          production: false,
+          lazy: true,
+        },
+      },
+    });
+
+    // Check that certificates were not requested during registration
+    expect(getCertificatesMock).not.toHaveBeenCalled();
+  });
+
+  it('should request and cache certificates on first HTTPS request for lazy certificates', async () => {
+    // Reset mocks
+    getCertificatesMock.mockClear();
+
+    // Make an HTTPS request to trigger lazy loading of certificates
+    const options = {
+      hostname: 'localhost',
+      port: 8443,
+      path: '/',
+      method: 'GET',
+      headers: { Host: 'lazy.example.com' }, // Required for virtual hosts
+      rejectUnauthorized: false, // Accept self-signed certificates
+    };
+
+    const response = await new Promise<{ statusCode: number; data: string }>((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          resolve({ statusCode: res.statusCode || 0, data });
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.data).toBe(responseMessage);
+
+    // Ensure that certificates are now loaded
+    expect(getCertificatesMock).toHaveBeenCalled();
   });
 });
