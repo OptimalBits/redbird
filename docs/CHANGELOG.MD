@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/OptimalBits/redbird/compare/v1.0.0...v1.0.1) (2024-09-19)
+
+
+### Bug Fixes
+
+* add dist files to npm package ([80264ac](https://github.com/OptimalBits/redbird/commit/80264ac4b15667b0124afa0f7bf11649b0245203))
+
 # 1.0.0 (2024-09-19)
 
 
