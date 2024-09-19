@@ -1,0 +1,36 @@
+name: Release
+on:
+  push:
+    branches:
+      - master
+
+env:
+  HUSKY: 0
+
+jobs:
+  release:
+    permissions:
+      contents: write # for release publishing
+
+    name: Release
+    env:
+      commitmsg: ${{ github.event.head_commit.message }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+      - name: Install dependencies Node
+        run: yarn install --frozen-lockfile --non-interactive
+      - run: yarn build
+      - name: Release Node
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
