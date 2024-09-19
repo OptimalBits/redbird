@@ -7,13 +7,9 @@
   <br/>
   <p>
     It should be easy and robust to handle dynamic virtual hosts, load balancing, proxying web sockets and SSL encryption.
-
     With Redbird you get a lightweight and flexible library to build dynamic reverse proxies with the speed and robustness of http-proxy.
-
     Redbird includes everything you need for easy reverse routing of your applications.
-
     Great for routing many applications from different domains in one single host, handling SSL with ease, etc.
-
   </p>
   <br/>
   <br/>
@@ -26,7 +22,7 @@
     </a>
   </p>
   <p>
-    <em>Follow <a href="https://twitter.com/manast">@manast</a> for *important* Bull/BullMQ/BullMQ-Pro news and updates!</em>
+    <em>Follow <a href="https://twitter.com/manast">@manast</a> for *important* Redbird news and updates!</em>
   </p>
 </div>
 

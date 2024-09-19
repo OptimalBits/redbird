@@ -1,6 +1,6 @@
 {
   "name": "redbird",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A reverse proxy with support for dynamic tables",
   "type": "module",
   "module": "./dist/index.js",
@@ -9,15 +9,15 @@
   "scripts": {
     "test": "vitest",
     "build": "tsc",
-    "format": "prettier --write *.js \"{samples,lib,test,hl-tests}/**/*.js\""
+    "format": "prettier --write *.js \"{samples,lib,test,hl-tests}/**/*.js\"",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/OptimalBits/redbird.git"
   },
   "files": [
-    "index.js",
-    "lib"
+    "dist"
   ],
   "keywords": [
     "proxy",
