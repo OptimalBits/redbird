@@ -17,7 +17,7 @@ export class ETCDModule {
 
     // Create Redbird Instance and Log
     this.redbird = redbird;
-    const log = redbird.log;
+    const log = redbird.logger;
     const _this = this;
 
     // Create node-etcd Instance

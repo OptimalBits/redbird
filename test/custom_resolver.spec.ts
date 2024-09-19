@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Redbird, buildRoute } from '../lib/index.js'; // Adjust the import path if necessary
-import { ResolverFn } from '../lib/interfaces/proxy-options.js';
 import { IncomingMessage } from 'http';
 import { ProxyRoute } from '../lib/interfaces/proxy-route.js';
+import { ResolverFn } from '../lib/interfaces/resolver.js';
 
 const opts = {
   port: 10000 + Math.ceil(Math.random() * 55535),

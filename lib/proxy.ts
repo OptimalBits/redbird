@@ -22,9 +22,11 @@ import { LRUCache } from 'lru-cache';
 
 // Custom modules.
 import * as letsencrypt from './letsencrypt.js';
-import { ProxyOptions, ResolverFn, Resolver } from './interfaces/proxy-options.js';
+import { ProxyOptions } from './interfaces/proxy-options.js';
 import { Socket } from 'net';
 import { ProxyRoute } from './interfaces/proxy-route.js';
+import { RouteOptions } from './interfaces/route-options.js';
+import { Resolver, ResolverFn, ResolverFnResult } from './interfaces/resolver.js';
 
 const { isFunction, isObject, sortBy, uniq, remove, isString } = lodash;
 
@@ -34,7 +36,7 @@ const ONE_DAY = 60 * 60 * 24 * 1000;
 const ONE_MONTH = ONE_DAY * 30;
 
 export class Redbird {
-  log?: Logger;
+  logger?: Logger;
   routing: any = {};
   resolvers: Resolver[] = [];
   certs: any;
@@ -61,9 +63,9 @@ export class Redbird {
       this.opts.httpProxy = {};
     }
 
-    if (opts.log) {
-      this.log = pino(
-        opts.log || {
+    if (opts.logger) {
+      this.logger = pino(
+        opts.logger || {
           name: 'redbird',
         }
       );
@@ -110,7 +112,7 @@ export class Redbird {
 
       cluster.on('exit', (worker, code, signal) => {
         // Fork if a worker dies.
-        this.log?.error(
+        this.logger?.error(
           {
             code: code,
             signal: signal,
@@ -136,12 +138,12 @@ export class Redbird {
 
       const websocketsUpgrade = async (req: any, socket: Socket, head: Buffer) => {
         socket.on('error', (err) => {
-          this.log?.error(err, 'WebSockets error');
+          this.logger?.error(err, 'WebSockets error');
         });
         const src = this.getSource(req);
         const target = await this.getTarget(src, req);
 
-        this.log?.info({ headers: req.headers, target: target }, 'upgrade to websockets');
+        this.logger?.info({ headers: req.headers, target: target }, 'upgrade to websockets');
 
         if (target) {
           if (target.useTargetHostHeader === true) {
@@ -220,7 +222,12 @@ export class Redbird {
       //
       // Plain HTTP Proxy
       //
-      const server = (this.server = this.setupHttpProxy(proxy, websocketsUpgrade, this.log, opts));
+      const server = (this.server = this.setupHttpProxy(
+        proxy,
+        websocketsUpgrade,
+        this.logger,
+        opts
+      ));
       server.listen(opts.port, opts.host);
 
       const handleProxyError = (
@@ -235,7 +242,7 @@ export class Redbird {
         // Send a 500 http status if headers have been sent
         //
         if (!res || !res.writeHead) {
-          this.log?.error(err, 'Proxy Error');
+          this.logger?.error(err, 'Proxy Error');
           return;
         } else {
           if (err.code === 'ECONNREFUSED') {
@@ -249,7 +256,7 @@ export class Redbird {
         // Do not log this common error
         //
         if (err.message !== 'socket hang up') {
-          this.log?.error(err, 'Proxy Error');
+          this.logger?.error(err, 'Proxy Error');
         }
 
         //
@@ -265,7 +272,7 @@ export class Redbird {
         proxy.on('error', handleProxyError);
       }
 
-      this.log?.info('Started a Redbird reverse proxy server on port %s', opts.port);
+      this.logger?.info('Started a Redbird reverse proxy server on port %s', opts.port);
     }
   }
 
@@ -277,8 +284,8 @@ export class Redbird {
         const target = await this.getTarget(src, req, res);
 
         if (target) {
-          if (this.shouldRedirectToHttps(this.certs, src, target)) {
-            redirectToHttps(req, res, this.opts.ssl, this.log);
+          if (this.shouldRedirectToHttps(target)) {
+            redirectToHttps(req, res, this.opts.ssl, this.logger);
           } else {
             proxy.web(req, res, { target, secure: !!opts.secure });
           }
@@ -310,9 +317,8 @@ export class Redbird {
       throw Error('Missing certificate path for Lets Encrypt');
     }
     const letsencryptPort = opts.letsencrypt.port || defaultLetsencryptPort;
-    this.letsencryptServer = letsencrypt.init(opts.letsencrypt.path, letsencryptPort, this.log);
+    this.letsencryptServer = letsencrypt.init(opts.letsencrypt.path, letsencryptPort, this.logger);
 
-    opts.resolvers = opts.resolvers || [];
     this.letsencryptHost = '127.0.0.1:' + letsencryptPort;
     const targetHost = 'http://' + this.letsencryptHost;
     const challengeResolver = (host: string, url: string) => {
@@ -337,7 +343,28 @@ export class Redbird {
       opts?: any;
     } = {
       SNICallback: async (hostname: string, cb: (err: any, ctx?: any) => void) => {
-        if (!certs[hostname] && this.lazyCerts[hostname]) {
+        if (!certs[hostname]) {
+          if (!this.opts?.letsencrypt?.path) {
+            console.error('Missing certificate path for Lets Encrypt');
+            return cb(new Error('No certs for hostname ' + hostname));
+          }
+
+          if (!this.lazyCerts[hostname]) {
+            // Check if we have a resolver that matches the hostname and has letsencrypt enabled
+            const results = await this.applyResolvers(this.resolvers, hostname, '', null);
+            const route = results.find((route) => (<any>route)?.opts?.ssl?.letsencrypt);
+            const sslOpts = (<any>route)?.opts?.ssl;
+            if (route && sslOpts) {
+              this.lazyCerts[hostname] = {
+                email: sslOpts.letsencrypt?.email,
+                production: sslOpts.letsencrypt?.production,
+                renewWithin: this.opts?.letsencrypt?.renewWithin || ONE_MONTH,
+              };
+            } else {
+              return cb(new Error('No certs for hostname ' + hostname));
+            }
+          }
+
           try {
             await this.updateCertificates(
               hostname,
@@ -407,14 +434,14 @@ export class Redbird {
     httpsServer.on('upgrade', websocketsUpgrade);
 
     httpsServer.on('error', (err: NodeJS.ErrnoException) => {
-      this.log?.error(err, 'HTTPS Server Error');
+      this.logger?.error(err, 'HTTPS Server Error');
     });
 
     httpsServer.on('clientError', (err: NodeJS.ErrnoException) => {
-      this.log?.error(err, 'HTTPS Client  Error');
+      this.logger?.error(err, 'HTTPS Client  Error');
     });
 
-    this.log?.info('Listening to HTTPS requests on port %s', sslOpts.port);
+    this.logger?.info('Listening to HTTPS requests on port %s', sslOpts.port);
     httpsServer.listen(sslOpts.port, sslOpts.ip);
   }
 
@@ -464,19 +491,15 @@ export class Redbird {
   @target {String|URL} A string or a url parsed by node url module.
   @opts {Object} Route options.
   */
-  register(opts: {
-    src: string | URL;
-    target: string | URL;
-    ssl: {
-      key?: string;
-      cert?: string;
-      ca?: string;
-      letsencrypt?: { email: string; production: boolean; lazy?: boolean };
-    };
-  }): Promise<void>;
+  register(
+    opts: {
+      src: string | URL;
+      target: string | URL;
+    } & RouteOptions
+  ): Promise<void>;
   register(src: string, opts: any): Promise<void>;
-  register(src: string | URL, target: string | URL, opts: any): Promise<void>;
-  async register(src: any, target?: any, opts?: any): Promise<void> {
+  register(src: string | URL, target: string | URL, opts: RouteOptions): Promise<void>;
+  async register(src: any, target?: any, opts?: RouteOptions): Promise<void> {
     if (this.opts.cluster && cluster.isPrimary) {
       return;
     }
@@ -516,7 +539,7 @@ export class Redbird {
             }
 
             if (!ssl.letsencrypt.lazy) {
-              this.log?.info('Getting Lets Encrypt certificates for %s', src.hostname);
+              this.logger?.info('Getting Lets Encrypt certificates for %s', src.hostname);
               await this.updateCertificates(
                 src.hostname,
                 ssl.letsencrypt.email,
@@ -525,7 +548,7 @@ export class Redbird {
               );
             } else {
               // We need to store the letsencrypt options for this domain somewhere
-              this.log?.info('Lazy loading Lets Encrypt certificates for %s', src.hostname);
+              this.logger?.info('Lazy loading Lets Encrypt certificates for %s', src.hostname);
               this.lazyCerts[src.hostname] = {
                 ...ssl.letsencrypt,
                 renewWithin: this.opts.letsencrypt.renewWithin || ONE_MONTH,
@@ -564,7 +587,7 @@ export class Redbird {
 
     route.urls.push(target);
 
-    this.log?.info({ from: src, to: target }, 'Registered a new route');
+    this.logger?.info({ from: src, to: target }, 'Registered a new route');
   }
 
   async updateCertificates(
@@ -581,7 +604,7 @@ export class Redbird {
         this.opts.letsencrypt?.port,
         production,
         renew,
-        this.log
+        this.logger
       );
       if (certs) {
         const opts = {
@@ -597,10 +620,10 @@ export class Redbird {
         renewTime =
           renewTime > 0 ? renewTime : this.opts.letsencrypt.minRenewTime || 60 * 60 * 1000;
 
-        this.log?.info('Renewal of %s in %s days', domain, Math.floor(renewTime / ONE_DAY));
+        this.logger?.info('Renewal of %s in %s days', domain, Math.floor(renewTime / ONE_DAY));
 
         const renewCertificate = () => {
-          this.log?.info('Renewing letscrypt certificates for %s', domain);
+          this.logger?.info('Renewing letscrypt certificates for %s', domain);
           this.updateCertificates(domain, email, production, renewWithin, true);
         };
 
@@ -609,7 +632,7 @@ export class Redbird {
         //
         // TODO: Try again, but we need an exponential backof to avoid getting banned.
         //
-        this.log?.info('Could not get any certs for %s', domain);
+        this.logger?.info('Could not get any certs for %s', domain);
       }
     } catch (err) {
       console.error('Error getting LetsEncrypt certificates', err);
@@ -659,9 +682,18 @@ export class Redbird {
         }
       }
 
-      this.log?.info({ from: src, to: target }, 'Unregistered a route');
+      this.logger?.info({ from: src, to: target }, 'Unregistered a route');
     }
     return this;
+  }
+
+  private applyResolvers(
+    resolvers: Resolver[],
+    host: string,
+    url: string,
+    req?: IncomingMessage
+  ): Promise<ResolverFnResult[]> {
+    return Promise.all(resolvers.map((resolver) => resolver.fn(host, url, req)));
   }
 
   /**
@@ -678,9 +710,7 @@ export class Redbird {
     try {
       host = host.toLowerCase();
 
-      const promiseArray = this.resolvers.map((resolver) => resolver.fn.call(this, host, url, req));
-
-      const resolverResults = await Promise.all(promiseArray);
+      const resolverResults = await this.applyResolvers(this.resolvers, host, url, req);
 
       for (let i = 0; i < resolverResults.length; i++) {
         const route = resolverResults[i];
@@ -709,7 +739,7 @@ export class Redbird {
 
     const route = await this.resolve(src, url, req);
     if (!route) {
-      this.log?.warn({ src: src, url: url }, 'no valid route found for given source');
+      this.logger?.warn({ src: src, url: url }, 'no valid route found for given source');
       return;
     }
 
@@ -754,12 +784,15 @@ export class Redbird {
     if (route.opts?.onRequest) {
       const resultFromRequestHandler = route.opts.onRequest(req, res, target);
       if (resultFromRequestHandler !== undefined) {
-        this.log?.info('Proxying %s received result from onRequest handler, returning.', src + url);
+        this.logger?.info(
+          'Proxying %s received result from onRequest handler, returning.',
+          src + url
+        );
         return resultFromRequestHandler;
       }
     }
 
-    this.log?.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
+    this.logger?.info('Proxying %s to %s', src + url, path.posix.join(target.host, req.url));
 
     return target;
   }
@@ -826,8 +859,8 @@ export class Redbird {
     }
   }
 
-  shouldRedirectToHttps(certs: any, src: string, target: any) {
-    return certs && src in certs && target.sslRedirect && target.host != this.letsencryptHost;
+  shouldRedirectToHttps(target: any) {
+    return target.sslRedirect && target.host != this.letsencryptHost;
   }
 }
 
