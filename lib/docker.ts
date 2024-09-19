@@ -23,7 +23,7 @@ export class DockerModule {
     const Dolphin = require('dolphin');
 
     this.redbird = redbird;
-    this.log = redbird.log;
+    this.log = redbird.logger;
 
     const targets: Record<string, Record<string, string>> = (this.targets = {});
     this.ports = {};

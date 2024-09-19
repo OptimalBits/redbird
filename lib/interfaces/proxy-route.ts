@@ -1,3 +1,6 @@
+import { ProxyTargetUrl } from './proxy-target-url.js';
+import { RouteOptions } from './route-options.js';
+
 /**
  * ProxyRoute interface
  * @description
@@ -8,16 +11,5 @@ export interface ProxyRoute {
   path?: string;
   rr?: number;
   isResolved?: boolean;
-  opts?: {
-    onRequest?: (req: any, res: any, target: ProxyTargetUrl) => void;
-  };
-}
-
-export interface ProxyTargetUrl {
-  host: string;
-  hostname: string;
-  port: number;
-  pathname: string;
-  useTargetHostHeader: boolean;
-  href: string;
+  opts?: RouteOptions;
 }

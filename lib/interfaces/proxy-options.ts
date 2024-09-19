@@ -2,19 +2,7 @@ import http, { IncomingMessage, ServerResponse } from 'http';
 import httpProxy, { ProxyTargetUrl } from 'http-proxy';
 import { Socket } from 'net';
 import pino from 'pino';
-
-type ResolverFnResult = string | { path: string; url: string } | null | undefined;
-
-export type ResolverFn = (
-  host: string,
-  url: string,
-  req?: IncomingMessage
-) => ResolverFnResult | Promise<ResolverFnResult>;
-
-export interface Resolver {
-  fn: ResolverFn;
-  priority: number;
-}
+import { Resolver } from './resolver.js';
 
 export interface SSLConfig {
   port?: number;
@@ -39,7 +27,7 @@ export interface ProxyOptions {
   httpProxy?: httpProxy.ServerOptions;
 
   // Enable Logging
-  log?: pino.LoggerOptions;
+  logger?: pino.Logger;
 
   // Enable Cluster Mode
   cluster?: number;

@@ -6,7 +6,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 
-import { certificate, key } from './fixtures';
+import { certificate, key } from './fixtures/index.js';
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
@@ -43,11 +43,11 @@ vi.mock('safe-timers', () => {
   };
 });
 
-import { Redbird } from '../lib';
+import { Redbird } from '../lib/index.js';
 
-const testPort = 54680;
-const sslPort = 8444;
-const proxyPort = 8081;
+const testPort = 54679;
+const proxyPort = 8083;
+const sslPort = 8443;
 
 // Helper functions to make HTTP and HTTPS requests
 function makeHttpRequest(options) {
@@ -62,6 +62,7 @@ function makeHttpRequest(options) {
       });
     });
     req.on('error', (err) => {
+      console.error('ERROR', err);
       reject(err);
     });
     req.end();
@@ -89,7 +90,7 @@ function makeHttpsRequest(options) {
 
 const responseMessage = 'Hello from target server';
 
-describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
+describe('Redbird Lets Encrypt SSL Certificate Generation For Custom Resolvers', () => {
   let proxy: Redbird;
   let targetServer: Server;
   let targetPort: number = testPort;
@@ -107,6 +108,18 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
       });
     });
 
+    const wildcard_target = {
+      url: `http://localhost:${targetPort}/`,
+      opts: {
+        ssl: {
+          letsencrypt: {
+            email: 'admin@optimalbits.com',
+            production: false,
+          },
+        },
+      },
+    };
+
     // Create a new instance of Redbird with SSL options
     proxy = new Redbird({
       port: proxyPort,
@@ -118,6 +131,15 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
         port: 9999, // Port for Let's Encrypt challenge responses
         renewWithin: 1 * ONE_DAY, // Renew certificates when they are within 1 day of expiration
       },
+      resolvers: [
+        {
+          // We will accept any hostname and return the same target.
+          fn: (hostname) => {
+            return wildcard_target;
+          },
+          priority: -1,
+        },
+      ],
     });
 
     // Mocking the certificate files
@@ -134,16 +156,6 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
 
   it('should generate SSL certificates for new subdomains', async () => {
     const subdomain = 'secure.example.com';
-
-    // Register a route for example.com with SSL generation
-    await proxy.register(subdomain, `http://localhost:${targetPort}`, {
-      ssl: {
-        letsencrypt: {
-          email: 'admin@example.com',
-          production: false, // Set to false for testing
-        },
-      },
-    });
 
     // Make an HTTPS request to the new subdomain
     // First HTTPS request to trigger certificate generation
@@ -188,22 +200,6 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
     // Use fake timers to simulate time passage
     vi.useFakeTimers();
 
-    // Register the domain
-    await proxy.register(subdomain, `http://localhost:${targetPort}`, {
-      ssl: {
-        letsencrypt: {
-          email: 'admin@example.com',
-          production: false,
-        },
-      },
-    });
-
-    expect(getCertificatesMock).toHaveBeenCalledTimes(1);
-
-    vi.advanceTimersByTime(8 * ONE_DAY);
-
-    expect(getCertificatesMock).toHaveBeenCalledTimes(1);
-
     // Initial HTTPS request to trigger certificate generation
     const options = {
       hostname: 'localhost',
@@ -219,6 +215,12 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
     const response = await makeHttpsRequest(options);
     expect(response.status).toBe(200);
     expect(response.data).toBe('Hello from target server');
+
+    expect(getCertificatesMock).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(8 * ONE_DAY);
+
+    expect(getCertificatesMock).toHaveBeenCalledTimes(1);
 
     // Advance all timers to execute pending callbacks
     vi.advanceTimersByTime(1 * ONE_DAY);
@@ -237,57 +239,24 @@ describe('Redbird Lets Encrypt SSL Certificate Generation', () => {
     vi.useRealTimers();
   });
 
-  it('should not request certificates immediately for lazy loaded domains', async () => {
-    // Reset mocks
-    getCertificatesMock.mockClear();
+  it('should redirect HTTP requests to HTTPS', async () => {
+    const subdomain = 'secure2.example.com';
 
-    // Simulate registering a domain with lazy loading enabled
-    await proxy.register('https://lazy.example.com', `http://localhost:${testPort}`, {
-      ssl: {
-        letsencrypt: {
-          email: 'email@example.com',
-          production: false,
-          lazy: true,
-        },
-      },
-    });
-
-    // Check that certificates were not requested during registration
-    expect(getCertificatesMock).not.toHaveBeenCalled();
-  });
-
-  it('should request and cache certificates on first HTTPS request for lazy certificates', async () => {
-    // Reset mocks
-    getCertificatesMock.mockClear();
-
-    // Make an HTTPS request to trigger lazy loading of certificates
+    // Make an HTTPS request to the new subdomain
+    // First HTTPS request to trigger certificate generation
     const options = {
       hostname: 'localhost',
-      port: sslPort,
+      port: proxyPort,
       path: '/',
       method: 'GET',
-      headers: { Host: 'lazy.example.com' }, // Required for virtual hosts
+      headers: {
+        Host: subdomain,
+      },
       rejectUnauthorized: false, // Accept self-signed certificates
     };
 
-    const response = await new Promise<{ statusCode: number; data: string }>((resolve, reject) => {
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-        res.on('end', () => {
-          resolve({ statusCode: res.statusCode || 0, data });
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.data).toBe(responseMessage);
-
-    // Ensure that certificates are now loaded
-    expect(getCertificatesMock).toHaveBeenCalled();
+    const response = await makeHttpRequest(options);
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toBe(`https://${subdomain}:${sslPort}/`);
   });
 });
