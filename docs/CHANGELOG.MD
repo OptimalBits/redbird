@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/OptimalBits/redbird/compare/v1.0.1...v1.0.2) (2024-09-30)
+
+
+### Bug Fixes
+
+* **package.json:** add missing main field ([55a35d3](https://github.com/OptimalBits/redbird/commit/55a35d368b5433554d0282a27c0836949568e1ea))
+
 ## [1.0.1](https://github.com/OptimalBits/redbird/compare/v1.0.0...v1.0.1) (2024-09-19)
 
 
