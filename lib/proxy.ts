@@ -343,7 +343,7 @@ export class Redbird {
       opts?: any;
     } = {
       SNICallback: async (hostname: string, cb: (err: any, ctx?: any) => void) => {
-        if (!certs[hostname]) {
+        if (this.opts?.letsencrypt && !certs[hostname]) {
           if (!this.opts?.letsencrypt?.path) {
             console.error('Missing certificate path for Lets Encrypt');
             return cb(new Error('No certs for hostname ' + hostname));
@@ -376,8 +376,6 @@ export class Redbird {
             console.error('Error getting LetsEncrypt certificates', err);
             return cb(err);
           }
-        } else if (!certs[hostname]) {
-          return cb(new Error('No certs for hostname ' + hostname));
         }
 
         if (cb) {
