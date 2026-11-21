@@ -12,6 +12,49 @@ const opts = {
 };
 
 describe('Target with pathnames', function () {
+  it.each([
+    ['', '', '/?url=https://google.com/', '/?url=https://google.com/'],
+    [
+      '/path',
+      '/foo/bar/qux',
+      '/path/a/b/c?url=https://google.com/a/../b//c&encoded=https%3A%2F%2Fexample.com',
+      '/foo/bar/qux/a/b/c?url=https://google.com/a/../b//c&encoded=https%3A%2F%2Fexample.com',
+    ],
+    [
+      '/path',
+      '/foo/bar/qux',
+      '/path/?url=//example.com/./a&next=?url=https://example.com',
+      '/foo/bar/qux/?url=//example.com/./a&next=?url=https://example.com',
+    ],
+  ])(
+    'should preserve query strings when proxying %s to %s: %s',
+    async (source, target, url, expected) => {
+      const server = createServer((req, res) => res.end(req.url));
+      await new Promise<void>((resolve) => server.listen(TEST_PORT, resolve));
+      const redbird = new Redbird(opts);
+
+      try {
+        await redbird.register(`127.0.0.1${source}`, `127.0.0.1:${TEST_PORT}${target}`);
+        const result = await new Promise<string>((resolve, reject) => {
+          get({ hostname: '127.0.0.1', port: PROXY_PORT, path: url }, (res) => {
+            let body = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+              body += chunk;
+            });
+            res.on('end', () => resolve(body));
+            res.on('error', reject);
+          }).on('error', reject);
+        });
+
+        expect(result).toBe(expected);
+      } finally {
+        await redbird.close();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    }
+  );
+
   it('Should be proxyed to target with pathname and source pathname concatenated', function () {
     const redbird = new Redbird(opts);
 
