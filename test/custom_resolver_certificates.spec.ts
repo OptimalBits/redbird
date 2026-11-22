@@ -259,4 +259,20 @@ describe('Redbird Lets Encrypt SSL Certificate Generation For Custom Resolvers',
     expect(response.status).toBe(302);
     expect(response.headers.location).toBe(`https://${subdomain}:${sslPort}/`);
   });
+
+  it.each([
+    '/?url=https://google.com/',
+    '/return?url=https://example.com/a/../b//c&encoded=https%3A%2F%2Fexample.com',
+  ])('should preserve query strings when redirecting %s to HTTPS', async (url) => {
+    const subdomain = 'secure2.example.com';
+    const response = await makeHttpRequest({
+      hostname: 'localhost',
+      port: proxyPort,
+      path: url,
+      headers: { Host: subdomain },
+    });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toBe(`https://${subdomain}:${sslPort}${url}`);
+  });
 });

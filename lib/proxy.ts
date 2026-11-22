@@ -767,7 +767,7 @@ export class Redbird {
     //
     if (target.pathname) {
       if (req.url) {
-        req.url = path.posix.join(target.pathname, req.url);
+        req.url = joinUrlPath(target.pathname, req.url);
       } else {
         req.url = target.pathname;
       }
@@ -872,7 +872,7 @@ function redirectToHttps(req: IncomingMessage, res: ServerResponse, ssl: any, lo
 
   const targetPort = ssl.redirectPort || ssl.port;
   const hostname = req.headers.host.split(':')[0] + (targetPort ? ':' + targetPort : '');
-  const url = 'https://' + path.posix.join(hostname, req.url);
+  const url = 'https://' + joinUrlPath(hostname, req.url);
   log && log.info('Redirecting %s to %s', path.posix.join(req.headers.host, req.url), url);
   //
   // We can use 301 for permanent redirect, but its bad for debugging, we may have it as
@@ -880,6 +880,16 @@ function redirectToHttps(req: IncomingMessage, res: ServerResponse, ssl: any, lo
   //
   res.writeHead(302, { Location: url });
   res.end();
+}
+
+function joinUrlPath(base: string, url: string) {
+  const queryIndex = url.indexOf('?');
+  if (queryIndex === -1) {
+    return path.posix.join(base, url);
+  }
+
+  // Normalize only the pathname; query values are not filesystem paths.
+  return path.posix.join(base, url.slice(0, queryIndex)) + url.slice(queryIndex);
 }
 
 function prepareUrl(url: string | URL) {
